@@ -7,6 +7,15 @@ import java.util.List;
 
 public class nj160040_VehicleOperations implements VehicleOperations {
 
+    private static nj160040_VehicleOperations instance;
+
+    public static nj160040_VehicleOperations getInstance() {
+        if (instance == null) {
+            instance = new nj160040_VehicleOperations();
+        }
+        return instance;
+    }
+
     @Override
     public boolean insertVehicle(String s, int i, BigDecimal bigDecimal, BigDecimal bigDecimal1) {
         return false;
@@ -36,4 +45,6 @@ public class nj160040_VehicleOperations implements VehicleOperations {
     public boolean changeCapacity(String s, BigDecimal bigDecimal) {
         return false;
     }
+
+    private nj160040_VehicleOperations() {}
 }

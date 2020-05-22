@@ -7,6 +7,15 @@ import java.util.List;
 
 public class nj160040_CourierOperations implements CourierOperations {
 
+    private static nj160040_CourierOperations instance;
+
+    public static nj160040_CourierOperations getInstance() {
+        if (instance == null) {
+            instance = new nj160040_CourierOperations();
+        }
+        return instance;
+    }
+
     @Override
     public boolean insertCourier(String s, String s1) {
         return false;
@@ -31,4 +40,6 @@ public class nj160040_CourierOperations implements CourierOperations {
     public BigDecimal getAverageCourierProfit(int i) {
         return null;
     }
+
+    private nj160040_CourierOperations() {}
 }

@@ -7,6 +7,16 @@ import java.sql.Date;
 import java.util.List;
 
 public class nj160040_PackageOperations implements PackageOperations {
+
+    private static nj160040_PackageOperations instance;
+
+    public static nj160040_PackageOperations getInstance() {
+        if (instance == null) {
+            instance = new nj160040_PackageOperations();
+        }
+        return instance;
+    }
+
     @Override
     public int insertPackage(int i, int i1, String s, int i2, BigDecimal bigDecimal) {
         return 0;
@@ -81,4 +91,6 @@ public class nj160040_PackageOperations implements PackageOperations {
     public Date getAcceptanceTime(int i) {
         return null;
     }
+
+    private nj160040_PackageOperations() {}
 }

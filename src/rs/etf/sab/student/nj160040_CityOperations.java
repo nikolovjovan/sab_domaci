@@ -10,6 +10,15 @@ import java.util.logging.Logger;
 
 public class nj160040_CityOperations implements CityOperations {
 
+    private static nj160040_CityOperations instance;
+
+    public static nj160040_CityOperations getInstance() {
+        if (instance == null) {
+            instance = new nj160040_CityOperations();
+        }
+        return instance;
+    }
+
     @Override
     public int insertCity(String name, String postalCode) {
         Connection conn = DB.getInstance().getConnection();
@@ -29,11 +38,10 @@ public class nj160040_CityOperations implements CityOperations {
             }
 
             // If it does not insert a new city with specified name and postal code.
-            try (PreparedStatement insStmt = conn.prepareStatement(insQuery)) {
-                insStmt.setString(1, name);
-                insStmt.setString(2, postalCode);
-                insStmt.executeUpdate();
-            }
+            PreparedStatement insStmt = conn.prepareStatement(insQuery);
+            insStmt.setString(1, name);
+            insStmt.setString(2, postalCode);
+            insStmt.executeUpdate();
 
             // Get primary key of the inserted city.
             rs = selStmt.executeQuery();
@@ -118,4 +126,6 @@ public class nj160040_CityOperations implements CityOperations {
 
         return list;
     }
+
+    private nj160040_CityOperations() {}
 }

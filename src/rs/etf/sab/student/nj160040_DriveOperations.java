@@ -6,6 +6,15 @@ import java.util.List;
 
 public class nj160040_DriveOperations implements DriveOperation {
 
+    private static nj160040_DriveOperations instance;
+
+    public static nj160040_DriveOperations getInstance() {
+        if (instance == null) {
+            instance = new nj160040_DriveOperations();
+        }
+        return instance;
+    }
+
     @Override
     public boolean planingDrive(String s) {
         return false;
@@ -20,4 +29,6 @@ public class nj160040_DriveOperations implements DriveOperation {
     public List<Integer> getPackagesInVehicle(String s) {
         return null;
     }
+
+    private nj160040_DriveOperations() {}
 }

@@ -6,6 +6,15 @@ import java.util.List;
 
 public class nj160040_UserOperations implements UserOperations {
 
+    private static nj160040_UserOperations instance;
+
+    public static nj160040_UserOperations getInstance() {
+        if (instance == null) {
+            instance = new nj160040_UserOperations();
+        }
+        return instance;
+    }
+
     @Override
     public boolean insertUser(String s, String s1, String s2, String s3) {
         return false;
@@ -30,4 +39,6 @@ public class nj160040_UserOperations implements UserOperations {
     public List<String> getAllUsers() {
         return null;
     }
+
+    private nj160040_UserOperations() {}
 }
