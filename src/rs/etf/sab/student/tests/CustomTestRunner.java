@@ -17,7 +17,8 @@ public class CustomTestRunner {
             CityOperationsTest.class,
             UserOperationsTest.class,
             // Custom tests
-            AddressOperationsTest.class
+            AddressOperationsTest.class,
+            StockroomOperationsTest.class
     };
 
     public static void runTests() {

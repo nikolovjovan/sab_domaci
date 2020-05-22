@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+// TODO: Check if addresses need to be updated when cities are removed (thus updating everything).
+
 public class nj160040_CityOperations implements CityOperations {
 
     private static nj160040_CityOperations instance;
@@ -17,6 +19,17 @@ public class nj160040_CityOperations implements CityOperations {
             instance = new nj160040_CityOperations();
         }
         return instance;
+    }
+
+    public boolean cityNotExist(int idCity) {
+        Connection conn = DB.getInstance().getConnection();
+        try (PreparedStatement stmt = conn.prepareStatement("select idCity from City where idCity = ?")) {
+            stmt.setInt(1, idCity);
+            return !stmt.executeQuery().next();
+        } catch (SQLException ex) {
+            Logger.getLogger(nj160040_CityOperations.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return true;
     }
 
     @Override
@@ -47,7 +60,7 @@ public class nj160040_CityOperations implements CityOperations {
             rs = selStmt.executeQuery();
             if (rs.next()) {
                 System.out.println("Successfully inserted city '" + name + "' with postal code '" + postalCode +
-                        "' and primary key: " + rs.getInt(1) + ".");
+                        "' and primary key: " + rs.getInt(1) + '.');
                 // Return the primary key.
                 return rs.getInt(1);
             }

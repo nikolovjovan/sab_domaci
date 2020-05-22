@@ -23,35 +23,30 @@ public class nj160040_AddressOperations implements AddressOperations {
     public int insertDistrict(String street, int number, int idCity, int xCord, int yCord) {
         Connection conn = DB.getInstance().getConnection();
 
-        String citySelQuery = "select * from City where idCity = ?";
         String addressSelQuery = "select idAddress from Address where " +
                 "(idCity = ? and street = ? and number = ?) or (xCord = ? and yCord = ?)";
         String insQuery = "insert into Address (idCity, street, number, xCord, yCord) values (?, ?, ?, ?, ?)";
 
-        try (PreparedStatement citySelStmt = conn.prepareStatement(citySelQuery)) {
-            citySelStmt.setInt(1, idCity);
+        // Check if city with specified primary key exists...
+        if (nj160040_CityOperations.getInstance().cityNotExist(idCity)) {
+            System.out.println("City with primary key: " + idCity + " does not exist!");
+            return -1;
+        }
 
-            // Check if the city with the specified primary key exists...
-            ResultSet rs = citySelStmt.executeQuery();
-            if (!rs.next()) {
-                System.out.println("City with primary key: " + idCity + " does not exist!");
-                return -1;
-            }
-
-            // Check if address with the same city id, street and number or same coordinates exists...
-            PreparedStatement addressSelStmt = conn.prepareStatement(addressSelQuery);
+        // Check if address with the same city id, street and number or same coordinates exists...
+        try (PreparedStatement addressSelStmt = conn.prepareStatement(addressSelQuery)) {
             addressSelStmt.setInt(1, idCity);
             addressSelStmt.setString(2, street);
             addressSelStmt.setInt(3, number);
             addressSelStmt.setInt(4, xCord);
             addressSelStmt.setInt(5, yCord);
-            rs = addressSelStmt.executeQuery();
+            ResultSet rs = addressSelStmt.executeQuery();
             if (rs.next()) {
                 System.out.println("Address with specified parameters already exists!");
                 return -1;
             }
 
-            // If it does not insert a new city with specified name and postal code.
+            // If it does not insert a new address with specified parameters.
             PreparedStatement insStmt = conn.prepareStatement(insQuery);
             insStmt.setInt(1, idCity);
             insStmt.setString(2, street);
@@ -60,21 +55,19 @@ public class nj160040_AddressOperations implements AddressOperations {
             insStmt.setInt(5, yCord);
             insStmt.executeUpdate();
 
-            // Get primary key of the inserted city.
+            // Get primary key of the inserted address.
             rs = addressSelStmt.executeQuery();
             if (rs.next()) {
                 System.out.println("Successfully inserted address '" + street + ' ' + number + "' with coordinates: " +
-                        xCord + 'x' + yCord + " and primary key: " + rs.getInt(1) + ".");
-                // Return the primary key.
-                return rs.getInt(1);
+                        xCord + 'x' + yCord + " and primary key: " + rs.getInt(1) + '.');
+                return rs.getInt(1); // Return the primary key.
             }
         } catch (SQLException ex) {
-            Logger.getLogger(nj160040_CityOperations.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(nj160040_AddressOperations.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         System.out.println("Failed to insert address '" + street + ' ' + number + "' with coordinates: " +
                 xCord + 'x' + yCord + '!');
-        // Return -1 as insert failed.
         return -1;
     }
 
@@ -94,7 +87,7 @@ public class nj160040_AddressOperations implements AddressOperations {
             }
             return count;
         } catch (SQLException ex) {
-            Logger.getLogger(nj160040_CityOperations.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(nj160040_AddressOperations.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return 0;
@@ -114,7 +107,7 @@ public class nj160040_AddressOperations implements AddressOperations {
                 return false;
             }
         } catch (SQLException ex) {
-            Logger.getLogger(nj160040_CityOperations.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(nj160040_AddressOperations.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         System.out.println("Failed to delete address with primary key: " + idAddress + "!");
@@ -124,6 +117,12 @@ public class nj160040_AddressOperations implements AddressOperations {
     @Override
     public int deleteAllAddressesFromCity(int idCity) {
         Connection conn = DB.getInstance().getConnection();
+
+        // Check if city with specified primary key exists...
+        if (nj160040_CityOperations.getInstance().cityNotExist(idCity)) {
+            System.out.println("City with primary key: " + idCity + " does not exist!");
+            return 0;
+        }
 
         try (PreparedStatement stmt = conn.prepareStatement("delete from Address where idCity = ?")) {
             stmt.setInt(1, idCity);
@@ -135,7 +134,7 @@ public class nj160040_AddressOperations implements AddressOperations {
             }
             return count;
         } catch (SQLException ex) {
-            Logger.getLogger(nj160040_CityOperations.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(nj160040_AddressOperations.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return 0;
@@ -144,6 +143,12 @@ public class nj160040_AddressOperations implements AddressOperations {
     @Override
     public List<Integer> getAllDistrictsFromCity(int idCity) {
         Connection conn = DB.getInstance().getConnection();
+
+        // Check if city with specified primary key exists...
+        if (nj160040_CityOperations.getInstance().cityNotExist(idCity)) {
+            System.out.println("City with primary key: " + idCity + " does not exist!");
+            return null;
+        }
 
         List<Integer> list = new ArrayList<>();
 
@@ -154,7 +159,7 @@ public class nj160040_AddressOperations implements AddressOperations {
                 list.add(rs.getInt(1));
             }
         } catch (SQLException ex) {
-            Logger.getLogger(nj160040_CityOperations.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(nj160040_AddressOperations.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return list.isEmpty() ? null : list;
@@ -172,7 +177,7 @@ public class nj160040_AddressOperations implements AddressOperations {
                 list.add(rs.getInt(1));
             }
         } catch (SQLException ex) {
-            Logger.getLogger(nj160040_CityOperations.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(nj160040_AddressOperations.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return list;
