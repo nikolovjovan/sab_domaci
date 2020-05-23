@@ -1,4 +1,4 @@
-package rs.etf.sab.student;
+package rs.etf.sab.student.utils;
 
 import java.sql.*;
 import java.util.logging.*;

@@ -1,6 +1,7 @@
-package rs.etf.sab.student;
+package rs.etf.sab.student.operations;
 
 import rs.etf.sab.operations.GeneralOperations;
+import rs.etf.sab.student.utils.DB;
 
 import java.sql.Connection;
 import java.sql.SQLException;

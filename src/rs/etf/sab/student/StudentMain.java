@@ -1,5 +1,6 @@
 package rs.etf.sab.student;
 
+import rs.etf.sab.student.operations.*;
 import rs.etf.sab.student.tests.CustomTestRunner;
 import rs.etf.sab.tests.TestHandler;
 //import rs.etf.sab.tests.TestRunner;

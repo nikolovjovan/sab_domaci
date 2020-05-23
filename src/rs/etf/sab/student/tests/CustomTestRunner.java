@@ -12,15 +12,17 @@ public class CustomTestRunner {
 
     private static final int MAX_POINTS_NORMALIZED = 10;
     private static final Class<?>[] TEST_CLASSES = new Class<?>[] {
-            // Original tests
+            // PROVIDED TESTS
             CityOperationsTest.class,
             // This test is bad since the insertUser does not set idAddress therefore it is fixed below...
             // UserOperationsTest.class,
-            // Custom tests
+            // CUSTOM TESTS
             AddressOperationsTest.class,
             StockroomOperationsTest.class,
             // This is a modified copy of the original test which fixes interface bugs...
-            UserOperationsTest.class
+            UserOperationsTest.class,
+            CourierOperationsTest.class,
+            CourierRequestOperationsTest.class
     };
 
     public static void runTests() {

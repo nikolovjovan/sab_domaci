@@ -1,4 +1,4 @@
-package rs.etf.sab.student;
+package rs.etf.sab.student.operations;
 
 import rs.etf.sab.operations.VehicleOperations;
 

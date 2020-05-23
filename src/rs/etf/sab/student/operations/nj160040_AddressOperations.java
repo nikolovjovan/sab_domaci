@@ -1,6 +1,7 @@
-package rs.etf.sab.student;
+package rs.etf.sab.student.operations;
 
 import rs.etf.sab.operations.AddressOperations;
+import rs.etf.sab.student.utils.DB;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -19,17 +20,6 @@ public class nj160040_AddressOperations implements AddressOperations {
         return instance;
     }
 
-    public boolean addressNotExist(int idAddress) {
-        Connection conn = DB.getInstance().getConnection();
-        try (PreparedStatement stmt = conn.prepareStatement("select idAddress from Address where idAddress = ?")) {
-            stmt.setInt(1, idAddress);
-            return !stmt.executeQuery().next();
-        } catch (SQLException ex) {
-            Logger.getLogger(nj160040_AddressOperations.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return true;
-    }
-
     @Override
     public int insertDistrict(String street, int number, int idCity, int xCord, int yCord) {
         Connection conn = DB.getInstance().getConnection();
@@ -39,7 +29,7 @@ public class nj160040_AddressOperations implements AddressOperations {
         String insQuery = "insert into Address (idCity, street, number, xCord, yCord) values (?, ?, ?, ?, ?)";
 
         // Check if city with specified primary key exists...
-        if (nj160040_CityOperations.getInstance().cityNotExist(idCity)) {
+        if (CommonOperations.cityNotExist(idCity)) {
             System.out.println("City with primary key: " + idCity + " does not exist!");
             return -1;
         }
@@ -130,7 +120,7 @@ public class nj160040_AddressOperations implements AddressOperations {
         Connection conn = DB.getInstance().getConnection();
 
         // Check if city with specified primary key exists...
-        if (nj160040_CityOperations.getInstance().cityNotExist(idCity)) {
+        if (CommonOperations.cityNotExist(idCity)) {
             System.out.println("City with primary key: " + idCity + " does not exist!");
             return 0;
         }
@@ -156,7 +146,7 @@ public class nj160040_AddressOperations implements AddressOperations {
         Connection conn = DB.getInstance().getConnection();
 
         // Check if city with specified primary key exists...
-        if (nj160040_CityOperations.getInstance().cityNotExist(idCity)) {
+        if (CommonOperations.cityNotExist(idCity)) {
             System.out.println("City with primary key: " + idCity + " does not exist!");
             return null;
         }

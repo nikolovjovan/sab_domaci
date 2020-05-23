@@ -1,63 +1,15 @@
 package rs.etf.sab.student.tests;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import rs.etf.sab.operations.AddressOperations;
-import rs.etf.sab.operations.CityOperations;
-import rs.etf.sab.operations.GeneralOperations;
-import rs.etf.sab.operations.StockroomOperations;
-import rs.etf.sab.student.nj160040_AddressOperations;
-import rs.etf.sab.student.nj160040_CityOperations;
-import rs.etf.sab.student.nj160040_GeneralOperations;
-import rs.etf.sab.student.nj160040_StockroomOperations;
+import org.junit.*;
 
 import java.util.List;
 import java.util.Random;
 
+import static rs.etf.sab.student.utils.TestUtils.*;
+
 public class StockroomOperationsTest {
 
-    private static final String sampleCityName = "Belgrade";
-    private static final String sampleCityPostalCode = "11000";
-
-    private static final String sampleAddressStreet = "Bulevar Kralja Aleksandra";
-    private static final int sampleAddressNumber = 73;
-    private static final int sampleAddressXCord = 69;
-    private static final int sampleAddressYCord = 420;
-
-    private GeneralOperations generalOperations;
-    private CityOperations cityOperations;
-    private AddressOperations addressOperations;
-    private StockroomOperations stockroomOperations;
-
-    private int insertSampleCity(String name, String postalCode) {
-        int idCity = cityOperations.insertCity(name, postalCode);
-        Assert.assertNotEquals(-1, idCity);
-        return idCity;
-    }
-
-    private int insertSampleCity() {
-        return insertSampleCity(sampleCityName, sampleCityPostalCode);
-    }
-
-    private int insertSampleAddress(int idCity, String street, int number, int xCord, int yCord) {
-        int rowId = addressOperations.insertDistrict(street, number, idCity, xCord, yCord);
-        Assert.assertNotEquals(-1, rowId);
-        return rowId;
-    }
-
-    private int insertSampleAddress(int idCity) {
-        return insertSampleAddress(idCity, sampleAddressStreet, sampleAddressNumber,
-                sampleAddressXCord, sampleAddressYCord);
-    }
-
-    private int insertSampleAddress() {
-        return insertSampleAddress(insertSampleCity(), sampleAddressStreet, sampleAddressNumber,
-                sampleAddressXCord, sampleAddressYCord);
-    }
-
-    private void checkTwoSameAddresses(int rowIdValid, int rowIdInvalid) {
+    private void checkTwoSameStockrooms(int rowIdValid, int rowIdInvalid) {
         Assert.assertNotEquals(-1, rowIdValid);
         Assert.assertEquals(-1, rowIdInvalid);
         List<Integer> list = stockroomOperations.getAllStockrooms();
@@ -67,25 +19,17 @@ public class StockroomOperationsTest {
 
     @Before
     public void setUp() {
-        generalOperations = nj160040_GeneralOperations.getInstance();
-        Assert.assertNotNull(generalOperations);
-        cityOperations = nj160040_CityOperations.getInstance();
-        Assert.assertNotNull(cityOperations);
-        addressOperations = nj160040_AddressOperations.getInstance();
-        Assert.assertNotNull(addressOperations);
-        stockroomOperations = nj160040_StockroomOperations.getInstance();
-        Assert.assertNotNull(stockroomOperations);
         generalOperations.eraseAll();
     }
 
-    @After
-    public void tearDown() {
-        this.generalOperations.eraseAll();
+    @AfterClass
+    public static void tearDown() {
+        generalOperations.eraseAll();
     }
 
     @Test
     public void insertDistrict_OnlyOne() {
-        int rowId = stockroomOperations.insertDistrict(insertSampleAddress());
+        int rowId = insertSampleStockroom();
         List<Integer> list = stockroomOperations.getAllStockrooms();
         Assert.assertEquals(1, list.size());
         Assert.assertTrue(list.contains(rowId));
@@ -96,7 +40,7 @@ public class StockroomOperationsTest {
         int idAddress = insertSampleAddress();
         int rowIdValid = stockroomOperations.insertDistrict(idAddress);
         int rowIdInvalid = stockroomOperations.insertDistrict(idAddress);
-        checkTwoSameAddresses(rowIdValid, rowIdInvalid);
+        checkTwoSameStockrooms(rowIdValid, rowIdInvalid);
     }
 
     @Test
@@ -106,7 +50,7 @@ public class StockroomOperationsTest {
         int idAddress2 = insertSampleAddress(idCity, "Knez Mihajlova", 23, 79, 52);
         int rowIdValid = stockroomOperations.insertDistrict(idAddress1);
         int rowIdInvalid = stockroomOperations.insertDistrict(idAddress2);
-        checkTwoSameAddresses(rowIdValid, rowIdInvalid);
+        checkTwoSameStockrooms(rowIdValid, rowIdInvalid);
     }
 
     @Test
@@ -127,8 +71,7 @@ public class StockroomOperationsTest {
 
     @Test
     public void deleteDistrict_WithId_OnlyOne() {
-        Assert.assertTrue(stockroomOperations.deleteDistrict(
-                stockroomOperations.insertDistrict(insertSampleAddress())));
+        Assert.assertTrue(stockroomOperations.deleteDistrict(insertSampleStockroom()));
         Assert.assertEquals(0, stockroomOperations.getAllStockrooms().size());
     }
 

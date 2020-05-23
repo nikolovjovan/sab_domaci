@@ -1,6 +1,7 @@
-package rs.etf.sab.student;
+package rs.etf.sab.student.operations;
 
 import rs.etf.sab.operations.StockroomOperations;
+import rs.etf.sab.student.utils.DB;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -96,7 +97,7 @@ public class nj160040_StockroomOperations implements StockroomOperations {
         Connection conn = DB.getInstance().getConnection();
 
         // Check if city with specified primary key exists...
-        if (nj160040_CityOperations.getInstance().cityNotExist(idCity)) {
+        if (CommonOperations.cityNotExist(idCity)) {
             System.out.println("City with primary key: " + idCity + " does not exist!");
             return -1;
         }

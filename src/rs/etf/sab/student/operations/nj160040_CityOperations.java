@@ -1,6 +1,7 @@
-package rs.etf.sab.student;
+package rs.etf.sab.student.operations;
 
 import rs.etf.sab.operations.CityOperations;
+import rs.etf.sab.student.utils.DB;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -19,17 +20,6 @@ public class nj160040_CityOperations implements CityOperations {
             instance = new nj160040_CityOperations();
         }
         return instance;
-    }
-
-    public boolean cityNotExist(int idCity) {
-        Connection conn = DB.getInstance().getConnection();
-        try (PreparedStatement stmt = conn.prepareStatement("select idCity from City where idCity = ?")) {
-            stmt.setInt(1, idCity);
-            return !stmt.executeQuery().next();
-        } catch (SQLException ex) {
-            Logger.getLogger(nj160040_CityOperations.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return true;
     }
 
     @Override

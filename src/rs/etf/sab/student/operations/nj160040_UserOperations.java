@@ -1,6 +1,7 @@
-package rs.etf.sab.student;
+package rs.etf.sab.student.operations;
 
 import rs.etf.sab.operations.UserOperations;
+import rs.etf.sab.student.utils.DB;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -19,19 +20,13 @@ public class nj160040_UserOperations implements UserOperations {
         return instance;
     }
 
-    private boolean isNullOrEmpty(String s, String paramName) {
-        if (s == null || s.isEmpty()) {
-            System.out.print("Null or empty " + paramName + "! ");
-            return true;
-        }
-        return false;
-    }
-
     public boolean insertUser(String userName, String firstName, String lastName, String password, int idAddress) {
         Connection conn = DB.getInstance().getConnection();
 
-        if (isNullOrEmpty(userName, "user name") || isNullOrEmpty(firstName, "first name") ||
-                isNullOrEmpty(lastName, "last name") || isNullOrEmpty(password, "password")) {
+        if (CommonOperations.isNullOrEmpty(userName, "user name") ||
+                CommonOperations.isNullOrEmpty(firstName, "first name") ||
+                CommonOperations.isNullOrEmpty(lastName, "last name") ||
+                CommonOperations.isNullOrEmpty(password, "password")) {
             System.out.println("Cannot add user!");
             return false;
         }
@@ -49,7 +44,7 @@ public class nj160040_UserOperations implements UserOperations {
                     "one uppercase letter, one lowercase letter, one digit and one special sign [!@#$%^&?].");
             return false;
         }
-        if (nj160040_AddressOperations.getInstance().addressNotExist(idAddress)) {
+        if (CommonOperations.addressNotExist(idAddress)) {
             System.out.println("Address with primary key: " + idAddress + " does not exist!");
             return false;
         }
@@ -64,7 +59,7 @@ public class nj160040_UserOperations implements UserOperations {
             // Check if the user already exists...
             ResultSet rs = selStmt.executeQuery();
             if (rs.next()) {
-                System.out.println("User with username '" + userName + "' already exists!");
+                System.out.println("User with user name '" + userName + "' already exists!");
                 return false;
             }
 
@@ -78,7 +73,7 @@ public class nj160040_UserOperations implements UserOperations {
             insStmt.setInt(5, idAddress);
             insStmt.setInt(6, 0); // type
             if (insStmt.executeUpdate() == 1) {
-                System.out.println("Successfully inserted user '" + firstName + ' ' + lastName + "' with userName '" +
+                System.out.println("Successfully inserted user '" + firstName + ' ' + lastName + "' with user name '" +
                         userName + "'.");
                 return true;
             }
@@ -86,7 +81,7 @@ public class nj160040_UserOperations implements UserOperations {
             Logger.getLogger(nj160040_UserOperations.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        System.out.println("Failed to insert user '" + firstName + ' ' + lastName + "' with userName '" +
+        System.out.println("Failed to insert user '" + firstName + ' ' + lastName + "' with user name '" +
                 userName + "'!");
         return false;
     }
@@ -94,6 +89,7 @@ public class nj160040_UserOperations implements UserOperations {
     // This method does not specify user's address... Wait for interface change...
     @Override
     public boolean insertUser(String userName, String firstName, String lastName, String password) {
+        // TODO: Remove this once interface is updated...
         List<Integer> addressList = nj160040_AddressOperations.getInstance().getAllDistricts();
         if (addressList == null || addressList.isEmpty()) {
             System.out.println("There are no addresses in the database! Cannot add a user with no address!");
@@ -106,30 +102,26 @@ public class nj160040_UserOperations implements UserOperations {
     public int declareAdmin(String userName) {
         Connection conn = DB.getInstance().getConnection();
 
-        if (isNullOrEmpty(userName, "user name")) {
+        if (CommonOperations.isNullOrEmpty(userName, "user name")) {
             System.out.println("Cannot declare admin!");
             return -1;
         }
 
-        // Check if user exists and was admin...
-        try (PreparedStatement stmt = conn.prepareStatement("select type from [User] where userName = ?")) {
-            stmt.setString(1, userName);
-            ResultSet rs = stmt.executeQuery();
-            if (!rs.next()) {
-                System.out.println("User with user name '" + userName + "' does not exist!");
-                return 2;
-            }
-            if (rs.getInt(1) == 2) {
-                System.out.println("User with user name '" + userName + "' is already an administrator.");
-                return 1;
-            }
+        int type = CommonOperations.getUserType(userName);
+        if (type == -1) {
+            System.out.println("User with user name '" + userName + "' does not exist!");
+            return 2;
+        }
+        if (type == 2) {
+            System.out.println("User with user name '" + userName + "' is already an administrator.");
+            return 1;
+        }
 
-            // User was not admin, update the row...
-            PreparedStatement updStmt = conn.prepareStatement("update [User] set type = ? where userName = ?");
-            updStmt.setInt(1, 2); // type = 2 (administrator)
-            updStmt.setString(2, userName);
-
-            if (updStmt.executeUpdate() == 1) {
+        // User was not admin, update the row...
+        try (PreparedStatement stmt = conn.prepareStatement("update [User] set type = ? where userName = ?")) {
+            stmt.setInt(1, 2); // type = 2 (administrator)
+            stmt.setString(2, userName);
+            if (stmt.executeUpdate() == 1) {
                 System.out.println("Successfully made user with user name '" + userName + "' an administrator.");
                 return 0;
             }
