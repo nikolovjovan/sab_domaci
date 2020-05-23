@@ -61,30 +61,22 @@ public class nj160040_CityOperations implements CityOperations {
             if (rs.next()) {
                 System.out.println("Successfully inserted city '" + name + "' with postal code '" + postalCode +
                         "' and primary key: " + rs.getInt(1) + '.');
-                // Return the primary key.
-                return rs.getInt(1);
+                return rs.getInt(1); // Return the primary key.
             }
         } catch (SQLException ex) {
             Logger.getLogger(nj160040_CityOperations.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         System.out.println("Failed to insert city '" + name + "' with postal code '" + postalCode + "'!");
-        // Return -1 as insert failed.
         return -1;
     }
 
     @Override
     public int deleteCity(String... names) {
-        if (names == null || names.length == 0) return 0;
+        String nameList = DB.getInstance().generateColumnValueList(names);
+        if (nameList == null) return 0;
 
         Connection conn = DB.getInstance().getConnection();
-
-        StringBuilder listBuilder = new StringBuilder();
-        for (int i = 0; i < names.length - 1; i++) {
-            listBuilder.append('\'').append(names[i]).append("', ");
-        }
-        listBuilder.append('\'').append(names[names.length - 1]).append('\'');
-        String nameList = listBuilder.toString();
 
         try (Statement stmt = conn.createStatement()) {
             int count = stmt.executeUpdate("delete from City where name in (" + nameList + ')');

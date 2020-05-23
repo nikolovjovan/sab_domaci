@@ -34,4 +34,17 @@ public class DB {
             Logger.getLogger(DB.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+
+    public String generateColumnValueList(Object[] values) {
+        if (values == null || values.length == 0) return null;
+
+        StringBuilder listBuilder = new StringBuilder();
+        for (int i = 0; i < values.length - 1; i++) {
+            listBuilder.append('\'').append(values[i]).append("', ");
+        }
+        listBuilder.append('\'').append(values[values.length - 1]).append('\'');
+
+        return listBuilder.toString();
+    }
+
 }

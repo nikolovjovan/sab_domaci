@@ -7,7 +7,6 @@ import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 import rs.etf.sab.tests.CityOperationsTest;
-import rs.etf.sab.tests.UserOperationsTest;
 
 public class CustomTestRunner {
 
@@ -15,10 +14,13 @@ public class CustomTestRunner {
     private static final Class<?>[] TEST_CLASSES = new Class<?>[] {
             // Original tests
             CityOperationsTest.class,
-            UserOperationsTest.class,
+            // This test is bad since the insertUser does not set idAddress therefore it is fixed below...
+            // UserOperationsTest.class,
             // Custom tests
             AddressOperationsTest.class,
-            StockroomOperationsTest.class
+            StockroomOperationsTest.class,
+            // This is a modified copy of the original test which fixes interface bugs...
+            UserOperationsTest.class
     };
 
     public static void runTests() {

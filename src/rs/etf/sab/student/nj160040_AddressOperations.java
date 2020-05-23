@@ -19,6 +19,17 @@ public class nj160040_AddressOperations implements AddressOperations {
         return instance;
     }
 
+    public boolean addressNotExist(int idAddress) {
+        Connection conn = DB.getInstance().getConnection();
+        try (PreparedStatement stmt = conn.prepareStatement("select idAddress from Address where idAddress = ?")) {
+            stmt.setInt(1, idAddress);
+            return !stmt.executeQuery().next();
+        } catch (SQLException ex) {
+            Logger.getLogger(nj160040_AddressOperations.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return true;
+    }
+
     @Override
     public int insertDistrict(String street, int number, int idCity, int xCord, int yCord) {
         Connection conn = DB.getInstance().getConnection();
