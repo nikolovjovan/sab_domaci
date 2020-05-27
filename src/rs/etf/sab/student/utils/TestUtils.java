@@ -28,6 +28,8 @@ public class TestUtils {
     public static UserOperations userOperations;
     public static CourierOperations courierOperations;
     public static CourierRequestOperation courierRequestOperations;
+    public static PackageOperations packageOperations;
+    public static DriveOperation driveOperations;
 
     static {
         generalOperations = nj160040_GeneralOperations.getInstance();
@@ -44,6 +46,10 @@ public class TestUtils {
         Assert.assertNotNull(courierOperations);
         courierRequestOperations = nj160040_CourierRequestOperations.getInstance();
         Assert.assertNotNull(courierRequestOperations);
+        packageOperations = nj160040_PackageOperations.getInstance();
+        Assert.assertNotNull(packageOperations);
+        driveOperations = nj160040_DriveOperations.getInstance();
+        Assert.assertNotNull(driveOperations);
     }
 
     public static int insertSampleCity(String name, String postalCode) {

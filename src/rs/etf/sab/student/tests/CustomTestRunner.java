@@ -22,7 +22,8 @@ public class CustomTestRunner {
             // This is a modified copy of the original test which fixes interface bugs...
             UserOperationsTest.class,
             CourierOperationsTest.class,
-            CourierRequestOperationsTest.class
+            CourierRequestOperationsTest.class,
+            PackageOperationsTest.class
     };
 
     public static void runTests() {
