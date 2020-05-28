@@ -28,7 +28,7 @@ public class StockroomOperationsTest {
     }
 
     @Test
-    public void insertDistrict_OnlyOne() {
+    public void insertStockroom_OnlyOne() {
         int rowId = insertSampleStockroom();
         List<Integer> list = stockroomOperations.getAllStockrooms();
         Assert.assertEquals(1, list.size());
@@ -36,7 +36,7 @@ public class StockroomOperationsTest {
     }
 
     @Test
-    public void insertDistrict_TwoStockrooms_SameAddress() {
+    public void insertStockroom_TwoStockrooms_SameAddress() {
         int idAddress = insertSampleAddress();
         int rowIdValid = stockroomOperations.insertStockroom(idAddress);
         int rowIdInvalid = stockroomOperations.insertStockroom(idAddress);
@@ -44,7 +44,7 @@ public class StockroomOperationsTest {
     }
 
     @Test
-    public void insertDistrict_TwoStockrooms_SameCity() {
+    public void insertStockroom_TwoStockrooms_SameCity() {
         int idCity = insertSampleCity();
         int idAddress1 = insertSampleAddress(idCity);
         int idAddress2 = insertSampleAddress(idCity, "Knez Mihajlova", 23, 79, 52);
@@ -54,7 +54,7 @@ public class StockroomOperationsTest {
     }
 
     @Test
-    public void insertDistrict_MultipleStockrooms() {
+    public void insertStockroom_MultipleStockrooms() {
         int idCity1 = insertSampleCity();
         int idCity2 = insertSampleCity("New York", "159489");
         int idAddress1 = insertSampleAddress(idCity1);
@@ -70,13 +70,13 @@ public class StockroomOperationsTest {
     }
 
     @Test
-    public void deleteDistrict_WithId_OnlyOne() {
+    public void deleteStockroom_WithId_OnlyOne() {
         Assert.assertTrue(stockroomOperations.deleteStockroom(insertSampleStockroom()));
         Assert.assertEquals(0, stockroomOperations.getAllStockrooms().size());
     }
 
     @Test
-    public void deleteDistrict_WithId_OnlyOne_NotExisting() {
+    public void deleteStockroom_WithId_OnlyOne_NotExisting() {
         Random random = new Random();
         int rowId = random.nextInt();
         Assert.assertFalse(stockroomOperations.deleteStockroom(rowId));

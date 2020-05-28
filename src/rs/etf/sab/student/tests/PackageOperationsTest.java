@@ -18,15 +18,10 @@ public class PackageOperationsTest {
         generalOperations.eraseAll();
     }
 
-    /*
-    TODO: Add other method signatures...
-    public int insertPackage(int idAddressFrom, int idAddressTo, String userName, int type, BigDecimal weight);
-     */
-
     @Test
     public void insertPackage_OnlyOne() {
         int idAddress = insertSampleAddress();
-        insertSampleUser();
+        insertSampleUser(idAddress);
         int type = 2; // package with non-standard dimensions
         BigDecimal weight = BigDecimal.valueOf(12.3);
         int rowId = packageOperations.insertPackage(idAddress, idAddress, sampleUserUserName, type, weight);
@@ -38,7 +33,7 @@ public class PackageOperationsTest {
     @Test
     public void getPriceOfDelivery_SmallPackage() {
         int idAddress = insertSampleAddress();
-        insertSampleUser();
+        insertSampleUser(idAddress);
         int type = 0; // small package
         BigDecimal weight = BigDecimal.valueOf(0.57);
         int rowId = packageOperations.insertPackage(idAddress, idAddress, sampleUserUserName, type, weight);
@@ -53,7 +48,7 @@ public class PackageOperationsTest {
     @Test
     public void getPriceOfDelivery_StandardPackage() {
         int idAddress = insertSampleAddress();
-        insertSampleUser();
+        insertSampleUser(idAddress);
         int type = 1; // standard package
         BigDecimal weight = BigDecimal.valueOf(1.926);
         int rowId = packageOperations.insertPackage(idAddress, idAddress, sampleUserUserName, type, weight);
@@ -68,7 +63,7 @@ public class PackageOperationsTest {
     @Test
     public void getPriceOfDelivery_NonStandardPackage() {
         int idAddress = insertSampleAddress();
-        insertSampleUser();
+        insertSampleUser(idAddress);
         int type = 2; // package with non-standard dimensions
         BigDecimal weight = BigDecimal.valueOf(7.592);
         int rowId = packageOperations.insertPackage(idAddress, idAddress, sampleUserUserName, type, weight);
@@ -84,7 +79,7 @@ public class PackageOperationsTest {
     @Test
     public void getPriceOfDelivery_FragilePackage() {
         int idAddress = insertSampleAddress();
-        insertSampleUser();
+        insertSampleUser(idAddress);
         int type = 3; // fragile package
         BigDecimal weight = BigDecimal.valueOf(2.531);
         int rowId = packageOperations.insertPackage(idAddress, idAddress, sampleUserUserName, type, weight);

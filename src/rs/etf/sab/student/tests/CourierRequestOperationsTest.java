@@ -16,17 +16,8 @@ public class CourierRequestOperationsTest {
         generalOperations.eraseAll();
     }
 
-    /*
-    public boolean insertCourierRequest(String userName, String driversLicenseNumber);
-    public boolean deleteCourierRequest(String userName);
-    public boolean changeVehicleInCourierRequest(String userName, String driversLicenseNumber);
-    public List<String> getAllCourierRequests();
-    public boolean grantRequest(String userName);
-     */
-
     @Test
     public void insertCourierRequest_OnlyOne() {
-        insertSampleAddress();
         insertSampleUser();
         insertSampleCourierRequest();
         Assert.assertEquals(1, courierRequestOperations.getAllCourierRequests().size());
@@ -35,7 +26,6 @@ public class CourierRequestOperationsTest {
 
     @Test
     public void insertCourierRequest_TwoCourierRequests_SameUserNameAndDriversLicenseNumber() {
-        insertSampleAddress();
         insertSampleUser();
         insertSampleCourierRequest();
         Assert.assertFalse(courierRequestOperations.insertCourierRequest(
@@ -46,7 +36,6 @@ public class CourierRequestOperationsTest {
 
     @Test
     public void insertCourierRequest_TwoCourierRequests_SameUserName() {
-        insertSampleAddress();
         insertSampleUser();
         insertSampleCourierRequest();
         Assert.assertFalse(courierRequestOperations.insertCourierRequest(
@@ -57,7 +46,6 @@ public class CourierRequestOperationsTest {
 
     @Test
     public void insertCourierRequest_TwoCourierRequests_SameDriversLicenseNumber() {
-        insertSampleAddress();
         insertSampleUser();
         insertSampleCourierRequest();
         Assert.assertFalse(courierRequestOperations.insertCourierRequest(
@@ -68,7 +56,6 @@ public class CourierRequestOperationsTest {
 
     @Test
     public void deleteCourierRequest_WithUserName_OnlyOne() {
-        insertSampleAddress();
         insertSampleUser();
         insertSampleCourierRequest();
         Assert.assertTrue(courierRequestOperations.deleteCourierRequest(sampleUserUserName));
@@ -83,10 +70,8 @@ public class CourierRequestOperationsTest {
         Assert.assertEquals(0, courierOperations.getAllCouriers().size());
     }
 
-    // changeDriversLicenseNumber...
     @Test
-    public void changeVehicleInCourierRequest_OnlyOne() {
-        insertSampleAddress();
+    public void changeDriverLicenseNumberInCourierRequest_OnlyOne() {
         insertSampleUser();
         insertSampleCourierRequest();
         Assert.assertTrue(courierRequestOperations.changeDriverLicenceNumberInCourierRequest(
@@ -94,17 +79,15 @@ public class CourierRequestOperationsTest {
     }
 
     @Test
-    public void changeVehicleInCourierRequest_OnlyOne_AlreadyCourier() {
-        insertSampleAddress();
+    public void changeDriverLicenseNumberInCourierRequest_OnlyOne_AlreadyCourier() {
         insertSampleUser();
         insertSampleCourier();
-        Assert.assertTrue(courierRequestOperations.changeDriverLicenceNumberInCourierRequest(
+        Assert.assertFalse(courierRequestOperations.changeDriverLicenceNumberInCourierRequest(
                 sampleUserUserName, sampleCourierDriversLicenseNumber + '8'));
     }
 
     @Test
     public void grantRequest_OnlyOne() {
-        insertSampleAddress();
         insertSampleUser();
         insertSampleCourierRequest();
         Assert.assertEquals(1, courierRequestOperations.getAllCourierRequests().size());
@@ -116,7 +99,6 @@ public class CourierRequestOperationsTest {
 
     @Test
     public void grantRequest_OnlyOne_AlreadyCourier() {
-        insertSampleAddress();
         insertSampleUser();
         insertSampleCourier();
         Assert.assertEquals(0, courierRequestOperations.getAllCourierRequests().size());
@@ -128,7 +110,6 @@ public class CourierRequestOperationsTest {
 
     @Test
     public void grantRequest_OnlyOne_NotExisting() {
-        insertSampleAddress();
         insertSampleUser();
         Assert.assertEquals(0, courierRequestOperations.getAllCourierRequests().size());
         Assert.assertEquals(0, courierOperations.getAllCouriers().size());

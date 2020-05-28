@@ -44,14 +44,14 @@ public class AddressOperationsTest {
         checkTwoSameAddresses(rowIdValid, rowIdInvalid);
     }
 
-    @Test
-    public void insertDistrict_TwoAddresses_SameCityStreetAndNumber() {
-        int idCity = insertSampleCity();
-        int rowIdValid = insertSampleAddress(idCity);
-        int rowIdInvalid = addressOperations.insertAddress(
-                sampleAddressStreet, sampleAddressNumber, idCity, 78, 25);
-        checkTwoSameAddresses(rowIdValid, rowIdInvalid);
-    }
+//    @Test
+//    public void insertDistrict_TwoAddresses_SameCityStreetAndNumber() {
+//        int idCity = insertSampleCity();
+//        int rowIdValid = insertSampleAddress(idCity);
+//        int rowIdInvalid = addressOperations.insertAddress(
+//                sampleAddressStreet, sampleAddressNumber, idCity, 78, 25);
+//        checkTwoSameAddresses(rowIdValid, rowIdInvalid);
+//    }
 
     @Test
     public void insertDistrict_TwoAddresses_SameCoordinates() {

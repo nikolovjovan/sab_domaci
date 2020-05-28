@@ -18,17 +18,8 @@ public class CourierOperationsTest {
         generalOperations.eraseAll();
     }
 
-    /*
-    public boolean insertCourier(String userName, String driversLicenseNumber);
-    public boolean deleteCourier(String userName);
-    public List<String> getCouriersWithStatus(int status);
-    public List<String> getAllCouriers();
-    public BigDecimal getAverageCourierProfit(int numberOfDeliveries);
-     */
-
     @Test
     public void insertCourier_OnlyOne() {
-        insertSampleAddress();
         insertSampleUser();
         insertSampleCourier();
         List<String> list = courierOperations.getAllCouriers();
@@ -38,7 +29,6 @@ public class CourierOperationsTest {
 
     @Test
     public void insertCourier_TwoCouriers_SameUserName() {
-        insertSampleAddress();
         insertSampleUser();
         insertSampleCourier();
         Assert.assertFalse(courierOperations.insertCourier(sampleUserUserName, "987654321"));
@@ -49,7 +39,6 @@ public class CourierOperationsTest {
 
     @Test
     public void deleteCourier_WithUserName_OnlyOne() {
-        insertSampleAddress();
         insertSampleUser();
         insertSampleCourier();
         Assert.assertTrue(courierOperations.deleteCourier(sampleUserUserName));
@@ -60,7 +49,6 @@ public class CourierOperationsTest {
 
     @Test
     public void deleteCourier_WithUserName_OnlyOne_NotCourier() {
-        insertSampleAddress();
         insertSampleUser();
         Assert.assertFalse(courierOperations.deleteCourier(sampleUserUserName));
         Assert.assertEquals(0, courierOperations.getAllCouriers().size());

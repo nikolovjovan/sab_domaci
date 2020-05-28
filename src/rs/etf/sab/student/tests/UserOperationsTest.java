@@ -18,33 +18,29 @@ public class UserOperationsTest {
 
     @Test
     public void insertUser() {
-        insertSampleAddress();
         insertSampleUser(); // asserts that insert is successful
     }
 
     @Test
     public void declareAdmin() {
-        insertSampleAddress();
         insertSampleUser();
-        Assert.assertFalse(userOperations.declareAdmin(sampleUserUserName));
-    }
-
-    @Test
-    public void declareAdmin_NoSuchUser() {
-        Assert.assertTrue(userOperations.declareAdmin("Nana"));
-    }
-
-    @Test
-    public void declareAdmin_AlreadyAdmin() {
-        insertSampleAddress();
-        insertSampleUser();
-        userOperations.declareAdmin(sampleUserUserName);
         Assert.assertTrue(userOperations.declareAdmin(sampleUserUserName));
     }
 
     @Test
+    public void declareAdmin_NoSuchUser() {
+        Assert.assertFalse(userOperations.declareAdmin("Nana"));
+    }
+
+    @Test
+    public void declareAdmin_AlreadyAdmin() {
+        insertSampleUser();
+        userOperations.declareAdmin(sampleUserUserName);
+        Assert.assertFalse(userOperations.declareAdmin(sampleUserUserName));
+    }
+
+    @Test
     public void getSentPackages_userExisting() {
-        insertSampleAddress();
         insertSampleUser();
         Assert.assertEquals(0, userOperations.getSentPackages(sampleUserUserName));
     }

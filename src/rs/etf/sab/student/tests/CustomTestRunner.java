@@ -17,10 +17,15 @@ public class CustomTestRunner {
             rs.etf.sab.tests.UserOperationsTest.class,
             rs.etf.sab.tests.CourierRequestOperationTest.class,
             rs.etf.sab.tests.StockroomOperationsTest.class,
-            rs.etf.sab.tests.VehicleOperationsTest.class //,
-//            rs.etf.sab.tests.PublicModuleTest.class
+            rs.etf.sab.tests.VehicleOperationsTest.class,
+//            rs.etf.sab.tests.PublicModuleTest.class,
             // CUSTOM TESTS
-
+            AddressOperationsTest.class,
+            UserOperationsTest.class,
+            CourierRequestOperationsTest.class,
+            CourierOperationsTest.class,
+            StockroomOperationsTest.class,
+            PackageOperationsTest.class
     };
 
     public static void runTests() {
