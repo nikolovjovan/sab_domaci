@@ -21,7 +21,7 @@ public class StudentMain {
                 nj160040_VehicleOperations.getInstance());
 
         // TODO: Uncomment original test runner call and use it instead of the custom one.
-        // TestRunner.runTests();
+//        TestRunner.runTests();
 
         CustomTestRunner.runTests();
     }

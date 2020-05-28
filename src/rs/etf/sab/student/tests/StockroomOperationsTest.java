@@ -38,8 +38,8 @@ public class StockroomOperationsTest {
     @Test
     public void insertDistrict_TwoStockrooms_SameAddress() {
         int idAddress = insertSampleAddress();
-        int rowIdValid = stockroomOperations.insertDistrict(idAddress);
-        int rowIdInvalid = stockroomOperations.insertDistrict(idAddress);
+        int rowIdValid = stockroomOperations.insertStockroom(idAddress);
+        int rowIdInvalid = stockroomOperations.insertStockroom(idAddress);
         checkTwoSameStockrooms(rowIdValid, rowIdInvalid);
     }
 
@@ -48,8 +48,8 @@ public class StockroomOperationsTest {
         int idCity = insertSampleCity();
         int idAddress1 = insertSampleAddress(idCity);
         int idAddress2 = insertSampleAddress(idCity, "Knez Mihajlova", 23, 79, 52);
-        int rowIdValid = stockroomOperations.insertDistrict(idAddress1);
-        int rowIdInvalid = stockroomOperations.insertDistrict(idAddress2);
+        int rowIdValid = stockroomOperations.insertStockroom(idAddress1);
+        int rowIdInvalid = stockroomOperations.insertStockroom(idAddress2);
         checkTwoSameStockrooms(rowIdValid, rowIdInvalid);
     }
 
@@ -59,8 +59,8 @@ public class StockroomOperationsTest {
         int idCity2 = insertSampleCity("New York", "159489");
         int idAddress1 = insertSampleAddress(idCity1);
         int idAddress2 = insertSampleAddress(idCity2, "Wall Street", 789, -4897, -89);
-        int rowId1 = stockroomOperations.insertDistrict(idAddress1);
-        int rowId2 = stockroomOperations.insertDistrict(idAddress2);
+        int rowId1 = stockroomOperations.insertStockroom(idAddress1);
+        int rowId2 = stockroomOperations.insertStockroom(idAddress2);
         // Retarded method name, documentation says that it should return the primary key of the stockroom in the
         // specified city therefore here it will be used as such...
         int idStockroom1 = stockroomOperations.deleteStockroomFromCity(idCity1);
@@ -71,7 +71,7 @@ public class StockroomOperationsTest {
 
     @Test
     public void deleteDistrict_WithId_OnlyOne() {
-        Assert.assertTrue(stockroomOperations.deleteDistrict(insertSampleStockroom()));
+        Assert.assertTrue(stockroomOperations.deleteStockroom(insertSampleStockroom()));
         Assert.assertEquals(0, stockroomOperations.getAllStockrooms().size());
     }
 
@@ -79,7 +79,7 @@ public class StockroomOperationsTest {
     public void deleteDistrict_WithId_OnlyOne_NotExisting() {
         Random random = new Random();
         int rowId = random.nextInt();
-        Assert.assertFalse(stockroomOperations.deleteDistrict(rowId));
+        Assert.assertFalse(stockroomOperations.deleteStockroom(rowId));
         Assert.assertEquals(0, stockroomOperations.getAllStockrooms().size());
     }
 }

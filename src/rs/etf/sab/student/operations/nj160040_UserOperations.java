@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+// TODO: Change type attribute to allow multiple types at once...
+//       00 - buyer, 01 - courier (and buyer), 10 - admin (and buyer), 11 - admin, courier (and buyer)
+
 public class nj160040_UserOperations implements UserOperations {
 
     private static nj160040_UserOperations instance;
@@ -20,6 +23,7 @@ public class nj160040_UserOperations implements UserOperations {
         return instance;
     }
 
+    @Override
     public boolean insertUser(String userName, String firstName, String lastName, String password, int idAddress) {
         Connection conn = DB.getInstance().getConnection();
 
@@ -38,10 +42,9 @@ public class nj160040_UserOperations implements UserOperations {
             System.out.println("Invalid last name format! First character is not uppercase.");
             return false;
         }
-        if (!password.matches("^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*?])(?=\\S+$)" +
-                "[A-Za-z0-9!@#$%^&*?]{8,20}$")) {
+        if (!password.matches("^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[_\\W])(?=\\S+$)[A-Za-z0-9_\\W]{8,20}$")) {
             System.out.println("Invalid password format! Password must be at least 8 characters long with at least " +
-                    "one uppercase letter, one lowercase letter, one digit and one special sign [!@#$%^&?].");
+                    "one uppercase letter, one lowercase letter, one digit and one special sign [_\\W].");
             return false;
         }
         if (CommonOperations.addressNotExist(idAddress)) {
@@ -86,35 +89,23 @@ public class nj160040_UserOperations implements UserOperations {
         return false;
     }
 
-    // This method does not specify user's address... Wait for interface change...
     @Override
-    public boolean insertUser(String userName, String firstName, String lastName, String password) {
-        // TODO: Remove this once interface is updated...
-        List<Integer> addressList = nj160040_AddressOperations.getInstance().getAllDistricts();
-        if (addressList == null || addressList.isEmpty()) {
-            System.out.println("There are no addresses in the database! Cannot add a user with no address!");
-            return false;
-        }
-        return insertUser(userName, firstName, lastName, password, addressList.get(addressList.size() - 1));
-    }
-
-    @Override
-    public int declareAdmin(String userName) {
+    public boolean declareAdmin(String userName) {
         Connection conn = DB.getInstance().getConnection();
 
         if (CommonOperations.isNullOrEmpty(userName, "user name")) {
             System.out.println("Cannot declare admin!");
-            return -1;
+            return false;
         }
 
         int type = CommonOperations.getUserType(userName);
         if (type == -1) {
             System.out.println("User with user name '" + userName + "' does not exist!");
-            return 2;
+            return false;
         }
         if (type == 2) {
             System.out.println("User with user name '" + userName + "' is already an administrator.");
-            return 1;
+            return false;
         }
 
         // User was not admin, update the row...
@@ -123,18 +114,18 @@ public class nj160040_UserOperations implements UserOperations {
             stmt.setString(2, userName);
             if (stmt.executeUpdate() == 1) {
                 System.out.println("Successfully made user with user name '" + userName + "' an administrator.");
-                return 0;
+                return true;
             }
         } catch (SQLException ex) {
             Logger.getLogger(nj160040_UserOperations.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         System.out.println("Failed to make user with user name '" + userName + "' an administrator!");
-        return 2;
+        return false;
     }
 
     @Override
-    public Integer getSentPackages(String... userNames) {
+    public int getSentPackages(String... userNames) {
         // TODO: Implement this method properly once packages are implemented...
         String userNameList = DB.getInstance().generateColumnValueList(userNames);
         if (userNameList == null) return 0;

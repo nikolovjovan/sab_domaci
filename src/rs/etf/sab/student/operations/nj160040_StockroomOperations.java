@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+// TODO: Allow stockroom deletion only if it is empty!!! Check for emptiness...
+
 public class nj160040_StockroomOperations implements StockroomOperations {
 
     private static nj160040_StockroomOperations instance;
@@ -24,7 +26,7 @@ public class nj160040_StockroomOperations implements StockroomOperations {
     }
 
     @Override
-    public int insertDistrict(int idAddress) {
+    public int insertStockroom(int idAddress) {
         Connection conn = DB.getInstance().getConnection();
 
         String citySelQuery = "select idCity from Address where idAddress = ?";
@@ -73,7 +75,7 @@ public class nj160040_StockroomOperations implements StockroomOperations {
     }
 
     @Override
-    public boolean deleteDistrict(int idStockroom) {
+    public boolean deleteStockroom(int idStockroom) {
         Connection conn = DB.getInstance().getConnection();
 
         try (PreparedStatement stmt = conn.prepareStatement("delete from Stockroom where idStockroom = ?")) {
@@ -118,13 +120,13 @@ public class nj160040_StockroomOperations implements StockroomOperations {
         return -1;
     }
 
-    // Stupidly named method supposedly should return the primary key of the stockroom within the specified city instead
-    // of removing said stockroom. If the city does not exist or there is no addresses in that city or there is no
-    // stockroom on said addresses returns -1, otherwise returns the primary key of the found stockroom.
     @Override
     public int deleteStockroomFromCity(int idCity) {
-        // TODO: See wth they want with this method...
-        return getStockroomInCity(idCity);
+        int idStockroom = getStockroomInCity(idCity);
+        if (idStockroom > -1) {
+            deleteStockroom(idStockroom);
+        }
+        return idStockroom;
     }
 
     @Override

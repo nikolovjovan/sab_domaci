@@ -173,7 +173,7 @@ public class nj160040_PackageOperations implements PackageOperations {
     }
 
     @Override
-    public Integer getDeliveryStatus(int idPackage) {
+    public int getDeliveryStatus(int idPackage) {
         Connection conn = DB.getInstance().getConnection();
 
         try (PreparedStatement stmt = conn.prepareStatement("select status from Package where idPackage = ?")) {
@@ -188,7 +188,7 @@ public class nj160040_PackageOperations implements PackageOperations {
 
         System.out.println("Failed to get delivery status of package with primary key: " + idPackage + '!');
         // TODO: Check what should be returned in this case...
-        return null;
+        return 0;
     }
 
     @Override
@@ -211,8 +211,8 @@ public class nj160040_PackageOperations implements PackageOperations {
     }
 
     @Override
-    public BigDecimal getCurrentLocationOfPackage(int idPackage) {
-        return null;
+    public int getCurrentLocationOfPackage(int idPackage) {
+        return 0;
     }
 
     @Override

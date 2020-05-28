@@ -63,7 +63,7 @@ public class TestUtils {
     }
 
     public static int insertSampleAddress(int idCity, String street, int number, int xCord, int yCord) {
-        int rowId = addressOperations.insertDistrict(street, number, idCity, xCord, yCord);
+        int rowId = addressOperations.insertAddress(street, number, idCity, xCord, yCord);
         Assert.assertNotEquals(-1, rowId);
         return rowId;
     }
@@ -79,7 +79,7 @@ public class TestUtils {
     }
 
     public static int insertSampleStockroom(int idAddress) {
-        int rowId = stockroomOperations.insertDistrict(idAddress);
+        int rowId = stockroomOperations.insertStockroom(idAddress);
         Assert.assertNotEquals(-1, rowId);
         return rowId;
     }
@@ -88,16 +88,20 @@ public class TestUtils {
         return insertSampleStockroom(insertSampleAddress());
     }
 
-    public static void insertSampleUser(String userName, String firstName, String lastName, String password) {
-        Assert.assertTrue(userOperations.insertUser(userName, firstName, lastName, password));
+    public static void insertSampleUser(String userName, String firstName, String lastName, String password, int idAddress) {
+        Assert.assertTrue(userOperations.insertUser(userName, firstName, lastName, password, idAddress));
     }
 
-    public static void insertSampleUser(String userName) {
-        insertSampleUser(userName, sampleUserFirstName, sampleUserLastName, sampleUserPassword);
+    public static void insertSampleUser(String userName, int idAddress) {
+        insertSampleUser(userName, sampleUserFirstName, sampleUserLastName, sampleUserPassword, idAddress);
+    }
+
+    public static void insertSampleUser(int idAddress) {
+        insertSampleUser(sampleUserUserName, idAddress);
     }
 
     public static void insertSampleUser() {
-        insertSampleUser(sampleUserUserName);
+        insertSampleUser(sampleUserUserName, insertSampleAddress());
     }
 
     public static void insertSampleCourier(String userName, String driversLicenseNumber) {

@@ -40,10 +40,8 @@ public class nj160040_CourierRequestOperations implements CourierRequestOperatio
         return CommonOperations.deleteCourierOrRequest(userName, true);
     }
 
-    // TODO: See wth this method should do... Treating this as a drivers license number change regardless of whether
-    //       there is a courier request for the specified user or the user is already a courier...
     @Override
-    public boolean changeVehicleInCourierRequest(String userName, String driversLicenseNumber) {
+    public boolean changeDriverLicenceNumberInCourierRequest(String userName, String driversLicenseNumber) {
         if (CommonOperations.userNotExist(userName)) {
             System.out.println("User with user name '" + userName + "' does not exist!");
             return false;
@@ -51,12 +49,12 @@ public class nj160040_CourierRequestOperations implements CourierRequestOperatio
 
         Connection conn = DB.getInstance().getConnection();
 
-        // TODO: If only courier request should be affected add " and status = 2" to the query below
-        String updQuery = "update Courier set driversLicenseNumber = ? where userName = ?";
+        String updQuery = "update Courier set driversLicenseNumber = ? where userName = ? and status = ?";
 
         try (PreparedStatement stmt = conn.prepareStatement(updQuery)) {
             stmt.setString(1, driversLicenseNumber);
             stmt.setString(2, userName);
+            stmt.setInt(3, 2); // status = 2 (courier request)
             if (stmt.executeUpdate() == 1) {
                 System.out.println("Successfully changed driver's license number of the courier with user name '" +
                         userName + "'.");

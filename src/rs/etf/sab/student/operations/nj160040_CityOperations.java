@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-// TODO: Check if addresses need to be updated when cities are removed (thus updating everything).
-
 public class nj160040_CityOperations implements CityOperations {
 
     private static nj160040_CityOperations instance;
@@ -26,12 +24,11 @@ public class nj160040_CityOperations implements CityOperations {
     public int insertCity(String name, String postalCode) {
         Connection conn = DB.getInstance().getConnection();
 
-        String selQuery = "select idCity from City where name = ? or postalCode = ?";
+        String selQuery = "select idCity from City where postalCode = ?";
         String insQuery = "insert into City (name, postalCode) values (?, ?)";
 
         try (PreparedStatement selStmt = conn.prepareStatement(selQuery)) {
-            selStmt.setString(1, name);
-            selStmt.setString(2, postalCode);
+            selStmt.setString(1, postalCode);
 
             // Check if the city already exists...
             ResultSet rs = selStmt.executeQuery();

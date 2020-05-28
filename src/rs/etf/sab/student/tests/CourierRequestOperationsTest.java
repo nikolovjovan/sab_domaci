@@ -89,7 +89,7 @@ public class CourierRequestOperationsTest {
         insertSampleAddress();
         insertSampleUser();
         insertSampleCourierRequest();
-        Assert.assertTrue(courierRequestOperations.changeVehicleInCourierRequest(
+        Assert.assertTrue(courierRequestOperations.changeDriverLicenceNumberInCourierRequest(
                 sampleUserUserName, sampleCourierDriversLicenseNumber + '8'));
     }
 
@@ -98,7 +98,7 @@ public class CourierRequestOperationsTest {
         insertSampleAddress();
         insertSampleUser();
         insertSampleCourier();
-        Assert.assertTrue(courierRequestOperations.changeVehicleInCourierRequest(
+        Assert.assertTrue(courierRequestOperations.changeDriverLicenceNumberInCourierRequest(
                 sampleUserUserName, sampleCourierDriversLicenseNumber + '8'));
     }
 

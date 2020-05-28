@@ -21,11 +21,13 @@ public class nj160040_AddressOperations implements AddressOperations {
     }
 
     @Override
-    public int insertDistrict(String street, int number, int idCity, int xCord, int yCord) {
+    public int insertAddress(String street, int number, int idCity, int xCord, int yCord) {
         Connection conn = DB.getInstance().getConnection();
 
-        String addressSelQuery = "select idAddress from Address where " +
-                "(idCity = ? and street = ? and number = ?) or (xCord = ? and yCord = ?)";
+        // TODO: Check if tuple idCity-street-number should be unique...
+//        String addressSelQuery = "select idAddress from Address where " +
+//                "(idCity = ? and street = ? and number = ?) or (xCord = ? and yCord = ?)";
+        String addressSelQuery = "select idAddress from Address where xCord = ? and yCord = ?";
         String insQuery = "insert into Address (idCity, street, number, xCord, yCord) values (?, ?, ?, ?, ?)";
 
         // Check if city with specified primary key exists...
@@ -34,13 +36,15 @@ public class nj160040_AddressOperations implements AddressOperations {
             return -1;
         }
 
-        // Check if address with the same city id, street and number or same coordinates exists...
+        // Check if address with the same coordinates exists...
         try (PreparedStatement addressSelStmt = conn.prepareStatement(addressSelQuery)) {
-            addressSelStmt.setInt(1, idCity);
-            addressSelStmt.setString(2, street);
-            addressSelStmt.setInt(3, number);
-            addressSelStmt.setInt(4, xCord);
-            addressSelStmt.setInt(5, yCord);
+//            addressSelStmt.setInt(1, idCity);
+//            addressSelStmt.setString(2, street);
+//            addressSelStmt.setInt(3, number);
+//            addressSelStmt.setInt(4, xCord);
+//            addressSelStmt.setInt(5, yCord);
+            addressSelStmt.setInt(1, xCord);
+            addressSelStmt.setInt(2, yCord);
             ResultSet rs = addressSelStmt.executeQuery();
             if (rs.next()) {
                 System.out.println("Address with specified parameters already exists!");
@@ -73,7 +77,7 @@ public class nj160040_AddressOperations implements AddressOperations {
     }
 
     @Override
-    public int deleteDistricts(String street, int number) {
+    public int deleteAddresses(String street, int number) {
         Connection conn = DB.getInstance().getConnection();
 
         try (PreparedStatement stmt = conn.prepareStatement("delete from Address where street = ? and number = ?")) {
@@ -94,8 +98,9 @@ public class nj160040_AddressOperations implements AddressOperations {
         return 0;
     }
 
+    // Why can't nobody grammar check their code...
     @Override
-    public boolean deleteDistrict(int idAddress) {
+    public boolean deleteAdress(int idAddress) {
         Connection conn = DB.getInstance().getConnection();
 
         try (PreparedStatement stmt = conn.prepareStatement("delete from Address where idAddress = ?")) {
@@ -142,7 +147,7 @@ public class nj160040_AddressOperations implements AddressOperations {
     }
 
     @Override
-    public List<Integer> getAllDistrictsFromCity(int idCity) {
+    public List<Integer> getAllAddressesFromCity(int idCity) {
         Connection conn = DB.getInstance().getConnection();
 
         // Check if city with specified primary key exists...
@@ -167,7 +172,7 @@ public class nj160040_AddressOperations implements AddressOperations {
     }
 
     @Override
-    public List<Integer> getAllDistricts() {
+    public List<Integer> getAllAddresses() {
         Connection conn = DB.getInstance().getConnection();
 
         List<Integer> list = new ArrayList<>();

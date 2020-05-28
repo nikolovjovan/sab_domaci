@@ -12,7 +12,7 @@ public class AddressOperationsTest {
     private void checkTwoSameAddresses(int rowIdValid, int rowIdInvalid) {
         Assert.assertNotEquals(-1, rowIdValid);
         Assert.assertEquals(-1, rowIdInvalid);
-        List<Integer> list = addressOperations.getAllDistricts();
+        List<Integer> list = addressOperations.getAllAddresses();
         Assert.assertEquals(1, list.size());
         Assert.assertTrue(list.contains(rowIdValid));
     }
@@ -30,7 +30,7 @@ public class AddressOperationsTest {
     @Test
     public void insertDistrict_OnlyOne() {
         int rowId = insertSampleAddress();
-        List<Integer> list = addressOperations.getAllDistricts();
+        List<Integer> list = addressOperations.getAllAddresses();
         Assert.assertEquals(1, list.size());
         Assert.assertTrue(list.contains(rowId));
     }
@@ -39,7 +39,7 @@ public class AddressOperationsTest {
     public void insertDistrict_TwoAddresses_SameCityStreetNumberAndCoordinates() {
         int idCity = insertSampleCity();
         int rowIdValid = insertSampleAddress(idCity);
-        int rowIdInvalid = addressOperations.insertDistrict(
+        int rowIdInvalid = addressOperations.insertAddress(
                 sampleAddressStreet, sampleAddressNumber, idCity, sampleAddressXCord, sampleAddressYCord);
         checkTwoSameAddresses(rowIdValid, rowIdInvalid);
     }
@@ -48,7 +48,7 @@ public class AddressOperationsTest {
     public void insertDistrict_TwoAddresses_SameCityStreetAndNumber() {
         int idCity = insertSampleCity();
         int rowIdValid = insertSampleAddress(idCity);
-        int rowIdInvalid = addressOperations.insertDistrict(
+        int rowIdInvalid = addressOperations.insertAddress(
                 sampleAddressStreet, sampleAddressNumber, idCity, 78, 25);
         checkTwoSameAddresses(rowIdValid, rowIdInvalid);
     }
@@ -57,7 +57,7 @@ public class AddressOperationsTest {
     public void insertDistrict_TwoAddresses_SameCoordinates() {
         int idCity = insertSampleCity();
         int rowIdValid = insertSampleAddress(idCity);
-        int rowIdInvalid = addressOperations.insertDistrict(
+        int rowIdInvalid = addressOperations.insertAddress(
                 "Cara Dusana", 59, idCity, sampleAddressXCord, sampleAddressYCord);
         checkTwoSameAddresses(rowIdValid, rowIdInvalid);
     }
@@ -67,7 +67,7 @@ public class AddressOperationsTest {
         int idCity = insertSampleCity();
         int rowId1 = insertSampleAddress(idCity);
         int rowId2 = insertSampleAddress(idCity, "Knez Mihajlova", 23, 79, 52);
-        List<Integer> list = addressOperations.getAllDistricts();
+        List<Integer> list = addressOperations.getAllAddresses();
         Assert.assertEquals(2, list.size());
         Assert.assertTrue(list.contains(rowId1));
         Assert.assertTrue(list.contains(rowId2));
@@ -79,33 +79,33 @@ public class AddressOperationsTest {
         int idCity2 = insertSampleCity("New York", "159489");
         int rowId1 = insertSampleAddress(idCity1);
         int rowId2 = insertSampleAddress(idCity2, "Wall Street", 789, -4897, -89);
-        List<Integer> list1 = addressOperations.getAllDistrictsFromCity(idCity1);
+        List<Integer> list1 = addressOperations.getAllAddressesFromCity(idCity1);
         Assert.assertEquals(1, list1.size());
         Assert.assertTrue(list1.contains(rowId1));
-        List<Integer> list2 = addressOperations.getAllDistrictsFromCity(idCity2);
+        List<Integer> list2 = addressOperations.getAllAddressesFromCity(idCity2);
         Assert.assertEquals(1, list2.size());
         Assert.assertTrue(list2.contains(rowId2));
     }
 
     @Test
     public void deleteDistrict_WithId_OnlyOne() {
-        Assert.assertTrue(addressOperations.deleteDistrict(insertSampleAddress()));
-        Assert.assertEquals(0, addressOperations.getAllDistricts().size());
+        Assert.assertTrue(addressOperations.deleteAdress(insertSampleAddress()));
+        Assert.assertEquals(0, addressOperations.getAllAddresses().size());
     }
 
     @Test
     public void deleteDistrict_WithId_OnlyOne_NotExisting() {
         Random random = new Random();
         int rowId = random.nextInt();
-        Assert.assertFalse(addressOperations.deleteDistrict(rowId));
-        Assert.assertEquals(0, addressOperations.getAllDistricts().size());
+        Assert.assertFalse(addressOperations.deleteAdress(rowId));
+        Assert.assertEquals(0, addressOperations.getAllAddresses().size());
     }
 
     @Test
     public void deleteDistricts_WithStreetAndNumber_OnlyOne() {
         insertSampleAddress();
-        Assert.assertEquals(1, addressOperations.deleteDistricts(sampleAddressStreet, sampleAddressNumber));
-        Assert.assertEquals(0, addressOperations.getAllDistricts().size());
+        Assert.assertEquals(1, addressOperations.deleteAddresses(sampleAddressStreet, sampleAddressNumber));
+        Assert.assertEquals(0, addressOperations.getAllAddresses().size());
     }
 
     @Test
@@ -114,15 +114,15 @@ public class AddressOperationsTest {
         int idCity = insertSampleCity("Novi Sad", "21000");
         int rowId = insertSampleAddress(idCity, sampleAddressStreet, sampleAddressNumber, 48, 35);
         Assert.assertNotEquals(-1, rowId);
-        List<Integer> list = addressOperations.getAllDistricts();
+        List<Integer> list = addressOperations.getAllAddresses();
         Assert.assertEquals(2, list.size());
-        Assert.assertEquals(2, addressOperations.deleteDistricts(sampleAddressStreet, sampleAddressNumber));
+        Assert.assertEquals(2, addressOperations.deleteAddresses(sampleAddressStreet, sampleAddressNumber));
     }
 
     @Test
     public void deleteDistricts_WithStreetAndNumber_NotExisting() {
-        Assert.assertEquals(0, addressOperations.deleteDistricts(sampleAddressStreet, sampleAddressNumber));
-        Assert.assertEquals(0, addressOperations.getAllDistricts().size());
+        Assert.assertEquals(0, addressOperations.deleteAddresses(sampleAddressStreet, sampleAddressNumber));
+        Assert.assertEquals(0, addressOperations.getAllAddresses().size());
     }
 
     @Test
@@ -130,7 +130,7 @@ public class AddressOperationsTest {
         int idCity = insertSampleCity();
         insertSampleAddress(idCity);
         Assert.assertEquals(1, addressOperations.deleteAllAddressesFromCity(idCity));
-        Assert.assertEquals(0, addressOperations.getAllDistricts().size());
+        Assert.assertEquals(0, addressOperations.getAllAddresses().size());
     }
 
     @Test
@@ -139,12 +139,12 @@ public class AddressOperationsTest {
         insertSampleAddress(idCity);
         insertSampleAddress(idCity, "Kneza Milosa", 23, 79, 52);
         Assert.assertEquals(2, addressOperations.deleteAllAddressesFromCity(idCity));
-        Assert.assertEquals(0, addressOperations.getAllDistricts().size());
+        Assert.assertEquals(0, addressOperations.getAllAddresses().size());
     }
 
     @Test
     public void deleteAllAddressesFromCity_NotExisting() {
         Assert.assertEquals(0, addressOperations.deleteAllAddressesFromCity(insertSampleCity()));
-        Assert.assertEquals(0, addressOperations.getAllDistricts().size());
+        Assert.assertEquals(0, addressOperations.getAllAddresses().size());
     }
 }

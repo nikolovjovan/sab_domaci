@@ -59,6 +59,17 @@ public class CommonOperations {
         return getUserType(userName) == -1;
     }
 
+    public static boolean stockroomNotExist(int idStockroom) {
+        Connection conn = DB.getInstance().getConnection();
+        try (PreparedStatement stmt = conn.prepareStatement("select idStockroom from Stockroom where idStockroom = ?")) {
+            stmt.setInt(1, idStockroom);
+            return !stmt.executeQuery().next();
+        } catch (SQLException ex) {
+            Logger.getLogger(nj160040_AddressOperations.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return true;
+    }
+
     public static int getUserTypeAndCheckIfCourier(String userName) {
         int type = CommonOperations.getUserType(userName);
         if (type == -1) {
@@ -159,5 +170,34 @@ public class CommonOperations {
         System.out.println("Failed to delete courier " + (request ? "request " : "") +
                 "with user name '" + userName + "'.");
         return false;
+    }
+
+    public static boolean isBeingDriven(String licensePlateNumber) {
+        Connection conn = DB.getInstance().getConnection();
+        String selQuery = "select userName from IsDriving where licensePlateNumber = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
+            stmt.setString(1, licensePlateNumber);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next();
+        } catch (SQLException ex) {
+            Logger.getLogger(nj160040_CourierOperations.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return true;
+    }
+    public static boolean notInStockroom(String licensePlateNumber) {
+        if (isBeingDriven(licensePlateNumber)) return true;
+        Connection conn = DB.getInstance().getConnection();
+        String selQuery = "select idStockroom from Vehicle where licensePlateNumber = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
+            stmt.setString(1, licensePlateNumber);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                rs.getInt(1);
+                return rs.wasNull();
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(nj160040_CourierOperations.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return true;
     }
 }

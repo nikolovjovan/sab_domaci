@@ -26,12 +26,12 @@ public class UserOperationsTest {
     public void declareAdmin() {
         insertSampleAddress();
         insertSampleUser();
-        Assert.assertEquals(0, userOperations.declareAdmin(sampleUserUserName));
+        Assert.assertFalse(userOperations.declareAdmin(sampleUserUserName));
     }
 
     @Test
     public void declareAdmin_NoSuchUser() {
-        Assert.assertEquals(2, userOperations.declareAdmin("Nana"));
+        Assert.assertTrue(userOperations.declareAdmin("Nana"));
     }
 
     @Test
@@ -39,36 +39,36 @@ public class UserOperationsTest {
         insertSampleAddress();
         insertSampleUser();
         userOperations.declareAdmin(sampleUserUserName);
-        Assert.assertEquals(1, userOperations.declareAdmin(sampleUserUserName));
+        Assert.assertTrue(userOperations.declareAdmin(sampleUserUserName));
     }
 
     @Test
     public void getSentPackages_userExisting() {
         insertSampleAddress();
         insertSampleUser();
-        Assert.assertEquals(new Integer(0), userOperations.getSentPackages(sampleUserUserName));
+        Assert.assertEquals(0, userOperations.getSentPackages(sampleUserUserName));
     }
 
     @Test
     public void getSentPackages_userNotExisting() {
-        Assert.assertEquals(new Integer(-1), userOperations.getSentPackages(sampleUserUserName));
+        Assert.assertEquals(-1, userOperations.getSentPackages(sampleUserUserName));
     }
 
     @Test
     public void deleteUsers() {
-        insertSampleAddress();
-        insertSampleUser();
+        int idAddress = insertSampleAddress();
+        insertSampleUser(idAddress);
         String userName2 = sampleUserUserName + '2';
-        insertSampleUser(userName2);
+        insertSampleUser(userName2, idAddress);
         Assert.assertEquals(2, userOperations.deleteUsers(sampleUserUserName, userName2));
     }
 
     @Test
     public void getAllUsers() {
-        insertSampleAddress();
-        insertSampleUser();
+        int idAddress = insertSampleAddress();
+        insertSampleUser(idAddress);
         String userName2 = sampleUserUserName + '2';
-        insertSampleUser(userName2);
+        insertSampleUser(userName2, idAddress);
         Assert.assertEquals(2, userOperations.getAllUsers().size());
         Assert.assertTrue(userOperations.getAllUsers().contains(sampleUserUserName));
         Assert.assertTrue(userOperations.getAllUsers().contains(userName2));

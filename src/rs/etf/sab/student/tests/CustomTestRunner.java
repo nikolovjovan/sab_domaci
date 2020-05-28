@@ -6,24 +6,21 @@ import org.junit.runner.Request;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
-import rs.etf.sab.tests.CityOperationsTest;
 
 public class CustomTestRunner {
 
     private static final int MAX_POINTS_NORMALIZED = 10;
     private static final Class<?>[] TEST_CLASSES = new Class<?>[] {
             // PROVIDED TESTS
-            CityOperationsTest.class,
-            // This test is bad since the insertUser does not set idAddress therefore it is fixed below...
-            // UserOperationsTest.class,
+            rs.etf.sab.tests.CityOperationsTest.class,
+            rs.etf.sab.tests.AddressOperationsTest.class,
+            rs.etf.sab.tests.UserOperationsTest.class,
+            rs.etf.sab.tests.CourierRequestOperationTest.class,
+            rs.etf.sab.tests.StockroomOperationsTest.class,
+            rs.etf.sab.tests.VehicleOperationsTest.class //,
+//            rs.etf.sab.tests.PublicModuleTest.class
             // CUSTOM TESTS
-            AddressOperationsTest.class,
-            StockroomOperationsTest.class,
-            // This is a modified copy of the original test which fixes interface bugs...
-            UserOperationsTest.class,
-            CourierOperationsTest.class,
-            CourierRequestOperationsTest.class,
-            PackageOperationsTest.class
+
     };
 
     public static void runTests() {
@@ -58,7 +55,9 @@ public class CustomTestRunner {
             int numberOfSuccessfulCases = numberOfAllCases - result.getFailureCount();
             System.out.println("Successful: " + numberOfSuccessfulCases);
             System.out.println("All: " + numberOfAllCases);
-            points += (double) numberOfSuccessfulCases / (double) numberOfAllCases;
+            double pointsCurrent = (double) numberOfSuccessfulCases / (double) numberOfAllCases;
+            System.out.println("Points: " + pointsCurrent);
+            points += pointsCurrent;
         }
         points = (points / TEST_CLASSES.length) * MAX_POINTS_NORMALIZED;
 

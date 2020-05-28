@@ -76,12 +76,12 @@ public class CourierOperationsTest {
 
     @Test
     public void getCouriersWithStatus() {
-        insertSampleAddress();
-        insertSampleUser();
+        int idAddress = insertSampleAddress();
+        insertSampleUser(idAddress);
         insertSampleCourier();
         String userName2 = sampleUserUserName + '2';
         String driversLicenseNumber2 = sampleCourierDriversLicenseNumber + '8';
-        insertSampleUser(userName2);
+        insertSampleUser(userName2, idAddress);
         insertSampleCourier(userName2, driversLicenseNumber2);
         List<String> list = courierOperations.getCouriersWithStatus(0);
         Assert.assertEquals(2, list.size());
