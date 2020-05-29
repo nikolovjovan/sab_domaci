@@ -32,11 +32,6 @@ public class nj160040_CourierRequestOperations implements CourierRequestOperatio
     public boolean deleteCourierRequest(String userName) {
         int type = CommonOperations.getUserTypeAndCheckIfCourier(userName);
         if (type == -1) return false;
-        if (type == 1) { // user already a courier
-            System.out.println("There is no courier request to be deleted.");
-            // TODO: Check if it should return true or false in this case...
-            return false;
-        }
         return CommonOperations.deleteCourierOrRequest(userName, true);
     }
 
@@ -91,11 +86,6 @@ public class nj160040_CourierRequestOperations implements CourierRequestOperatio
     public boolean grantRequest(String userName) {
         int type = CommonOperations.getUserTypeAndCheckIfCourier(userName);
         if (type == -1) return false;
-        if (type == 1) { // user already a courier
-            System.out.println("There is no courier request to be granted.");
-            // TODO: Check if it should return true or false in this case...
-            return false;
-        }
 
         Connection conn = DB.getInstance().getConnection();
 
@@ -104,9 +94,9 @@ public class nj160040_CourierRequestOperations implements CourierRequestOperatio
             stmt.setInt(1, 0); // status = 0 (not driving)
             stmt.setString(2, userName);
             if (stmt.executeUpdate() == 1) {
-                // Update user by changing type to 'courier'.
+                // Update user by changing adding courier flag to type.
                 PreparedStatement usrUpdStmt = conn.prepareStatement("update [User] set type = ? where userName = ?");
-                usrUpdStmt.setInt(1, 1); // type = 1 (courier)
+                usrUpdStmt.setInt(1, type | CommonOperations.userTypeCourierFlag);
                 usrUpdStmt.setString(2, userName);
                 if (usrUpdStmt.executeUpdate() == 1) {
                     System.out.println("Successfully granted courier request of the user with user name '" +

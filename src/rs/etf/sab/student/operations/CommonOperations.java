@@ -11,6 +11,10 @@ import java.util.logging.Logger;
 
 public class CommonOperations {
 
+    public static final int userTypeDefault = 0b00;
+    public static final int userTypeCourierFlag = 0b01;
+    public static final int userTypeAdminFlag = 0b10;
+
     public static boolean cityNotExist(int idCity) {
         Connection conn = DB.getInstance().getConnection();
         try (PreparedStatement stmt = conn.prepareStatement("select idCity from City where idCity = ?")) {
@@ -76,9 +80,8 @@ public class CommonOperations {
             System.out.println("User with user name '" + userName + "' does not exist!");
             return -1;
         }
-        if (type == 1) {
+        if ((type & userTypeCourierFlag) != 0) {
             System.out.println("User with user name '" + userName + "' is already a courier.");
-            // TODO: Check if it should return true or false in this case...
             return -1;
         }
         return type;
@@ -87,10 +90,6 @@ public class CommonOperations {
     public static boolean insertCourierOrRequest(String userName, String driversLicenseNumber, boolean request) {
         int type = getUserTypeAndCheckIfCourier(userName);
         if (type == -1) return false;
-        if (type == 1) { // user already a courier
-            // TODO: Check if it should return true or false in this case...
-            return false;
-        }
 
         Connection conn = DB.getInstance().getConnection();
 
@@ -119,7 +118,7 @@ public class CommonOperations {
                             userName + "'.");
                 } else {
                     PreparedStatement updStmt = conn.prepareStatement("update [User] set type = ? where userName = ?");
-                    updStmt.setInt(1, 1); // type = 0 (change user type to courier)
+                    updStmt.setInt(1, type | userTypeCourierFlag);
                     updStmt.setString(2, userName);
                     if (updStmt.executeUpdate() == 1) {
                         System.out.println("Successfully made user with user name '" + userName + "' a courier.");
@@ -156,7 +155,7 @@ public class CommonOperations {
                 }
                 // TODO: If user should be deleted altogether then change this to a delete statement...
                 PreparedStatement updStmt = conn.prepareStatement("update [User] set type = ? where userName = ?");
-                updStmt.setInt(1, 0); // type = 0 (change user type from courier to buyer)
+                updStmt.setInt(1, type & ~userTypeCourierFlag);
                 updStmt.setString(2, userName);
                 if (updStmt.executeUpdate() == 1) {
                     System.out.println("Successfully deleted courier with user name '" + userName + "'.");
@@ -184,6 +183,7 @@ public class CommonOperations {
         }
         return true;
     }
+
     public static boolean notInStockroom(String licensePlateNumber) {
         if (isBeingDriven(licensePlateNumber)) return true;
         Connection conn = DB.getInstance().getConnection();

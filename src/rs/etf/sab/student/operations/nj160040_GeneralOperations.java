@@ -20,9 +20,8 @@ public class nj160040_GeneralOperations implements GeneralOperations {
         return instance;
     }
 
-    // TODO: Add table names here once they are in the database (sorted by dependence - foreign keys).
-    private static final String[] tables = { "Package", "Vehicle", "Stockroom", "Courier", "User", "Address", "City" };
-    private static final String[] tablesWithIdentityColumn = { "Address", "City", "Stockroom" };
+    private static final String[] tables = { "Package", "Stop", "IsDriving", "Drove", "Vehicle", "Stockroom", "Courier", "User", "Address", "City" };
+    private static final String[] tablesWithIdentityColumn = { "Package", "Stockroom", "Address", "City" };
 
     @Override
     public void eraseAll() {

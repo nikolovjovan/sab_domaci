@@ -5,7 +5,6 @@ import rs.etf.sab.student.utils.DB;
 
 import java.math.BigDecimal;
 import java.sql.*;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -40,14 +39,14 @@ public class nj160040_PackageOperations implements PackageOperations {
             System.out.println("Invalid package type!");
             return -1;
         }
-        if (weight.compareTo(new BigDecimal(0)) <= 0) {
+        if (weight.compareTo(BigDecimal.valueOf(0)) <= 0) {
             System.out.println("Invalid package weight!");
             return -1;
         }
 
         Connection conn = DB.getInstance().getConnection();
 
-        String insQuery = "insert into Package (idAddressFrom, idAddressTo, userName, type, weight, createTime) " +
+        String insQuery = "insert into Package (idAddressFrom, idAddressTo, senderUserName, type, weight, createTime) " +
                 "values (?, ?, ?, ?, ?, ?)";
         String selQuery = "select top 1 idPackage from Package order by idPackage desc";
 
@@ -57,7 +56,7 @@ public class nj160040_PackageOperations implements PackageOperations {
             insStmt.setString(3, userName);
             insStmt.setInt(4, type);
             insStmt.setBigDecimal(5, weight);
-            insStmt.setDate(6, Date.valueOf(LocalDate.now()));
+            insStmt.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
             if (insStmt.executeUpdate() == 1) {
                 PreparedStatement selStmt = conn.prepareStatement(selQuery);
                 ResultSet rs = selStmt.executeQuery();
@@ -77,11 +76,46 @@ public class nj160040_PackageOperations implements PackageOperations {
 
     @Override
     public boolean acceptAnOffer(int idPackage) {
+        Connection conn = DB.getInstance().getConnection();
+
+        String updQuery = "update Package set acceptTime = ?, status = ? where idPackage = ? and status = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(updQuery)) {
+            stmt.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+            stmt.setInt(2, 1); // new status = 1 (offer accepted)
+            stmt.setInt(3, idPackage);
+            stmt.setInt(4, 0); // old status = 0 (request created)
+            if (stmt.executeUpdate() == 1) {
+                System.out.println("Successfully accepted the offer for package with primary key: " + idPackage + '.');
+                return true;
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(nj160040_PackageOperations.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        System.out.println("Failed to accept the offer for package with primary key: " + idPackage + '!');
         return false;
     }
 
     @Override
     public boolean rejectAnOffer(int idPackage) {
+        Connection conn = DB.getInstance().getConnection();
+
+        String updQuery = "update Package set status = ? where idPackage = ? and status = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(updQuery)) {
+            stmt.setInt(1, 4); // new status = 4 (offer rejected)
+            stmt.setInt(2, idPackage);
+            stmt.setInt(3, 0); // old status = 0 (request created)
+            if (stmt.executeUpdate() == 1) {
+                System.out.println("Successfully rejected the offer for package with primary key: " + idPackage + '.');
+                return true;
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(nj160040_PackageOperations.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        System.out.println("Failed to reject the offer for package with primary key: " + idPackage + '!');
         return false;
     }
 
@@ -134,8 +168,11 @@ public class nj160040_PackageOperations implements PackageOperations {
 
         List<Integer> list = new ArrayList<>();
 
-        try (PreparedStatement stmt = conn.prepareStatement("select idPackage from Package where status != ?")) {
-            stmt.setInt(1, 3); // status = 3 (delivered)
+        String selQuery = "select idPackage from Package where status = ? or status = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
+            stmt.setInt(1, 1); // status = 1 (offer accepted)
+            stmt.setInt(2, 2); // status = 2 (package picked up)
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 list.add(rs.getInt(1));
@@ -159,16 +196,76 @@ public class nj160040_PackageOperations implements PackageOperations {
 
     @Override
     public boolean deletePackage(int idPackage) {
+        Connection conn = DB.getInstance().getConnection();
+
+        try (PreparedStatement stmt = conn.prepareStatement("delete from Package where idPackage = ?")) {
+            stmt.setInt(1, idPackage);
+            if (stmt.executeUpdate() == 1) {
+                System.out.println("Successfully deleted package with primary key: " + idPackage + ".");
+                return true;
+            } else {
+                System.out.println("Package with primary key: " + idPackage + " does not exist!");
+                return false;
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(nj160040_PackageOperations.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        System.out.println("Failed to delete package with primary key: " + idPackage + "!");
         return false;
     }
 
     @Override
     public boolean changeWeight(int idPackage, BigDecimal weight) {
+        if (weight.compareTo(BigDecimal.valueOf(0)) <= 0) {
+            System.out.println("Invalid package weight!");
+            return false;
+        }
+
+        Connection conn = DB.getInstance().getConnection();
+
+        String updQuery = "update Package set weight = ? where idPackage = ? and status = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(updQuery)) {
+            stmt.setBigDecimal(1, weight);
+            stmt.setInt(2, idPackage);
+            stmt.setInt(3, 0); // old status = 0 (request created)
+            if (stmt.executeUpdate() == 1) {
+                System.out.println("Successfully changed the weight of the package with primary key: " + idPackage + '.');
+                return true;
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(nj160040_PackageOperations.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        System.out.println("Failed to change the weight of the package with primary key: " + idPackage + '!');
         return false;
     }
 
     @Override
     public boolean changeType(int idPackage, int type) {
+        if (type < 0 || type > 3) {
+            System.out.println("Invalid package type!");
+            return false;
+        }
+
+        Connection conn = DB.getInstance().getConnection();
+
+        String updQuery = "update Package set type = ? where idPackage = ? and status = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(updQuery)) {
+            stmt.setInt(1, type);
+            stmt.setInt(2, idPackage);
+            stmt.setInt(3, 0); // old status = 0 (request created)
+            if (stmt.executeUpdate() == 1) {
+                System.out.println("Successfully changed the type of the package with primary key: " + idPackage + '.');
+                return true;
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(nj160040_PackageOperations.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        System.out.println("Failed to change the type of the package with primary key: " + idPackage + '!');
         return false;
     }
 
@@ -188,7 +285,7 @@ public class nj160040_PackageOperations implements PackageOperations {
 
         System.out.println("Failed to get delivery status of package with primary key: " + idPackage + '!');
         // TODO: Check what should be returned in this case...
-        return 0;
+        return -1;
     }
 
     @Override

@@ -16,17 +16,29 @@ public class nj160040_DriveOperations implements DriveOperation {
     }
 
     @Override
-    public boolean planingDrive(String s) {
+    public boolean planingDrive(String courierUserName) {
+        int userType = CommonOperations.getUserType(courierUserName);
+        if (userType == -1) {
+            System.out.println("User with user name '" + courierUserName + "' does not exist!");
+            return false;
+        }
+        if (userType != 1) {
+            System.out.println("User with user name '" + courierUserName + "' is not a courier!");
+            return false;
+        }
+
+        // TODO: Change courier status to 1 (driving)
+
         return false;
     }
 
     @Override
-    public int nextStop(String s) {
+    public int nextStop(String courierUserName) {
         return 0;
     }
 
     @Override
-    public List<Integer> getPackagesInVehicle(String s) {
+    public List<Integer> getPackagesInVehicle(String courierUserName) {
         return null;
     }
 

@@ -4,6 +4,8 @@ import org.junit.Assert;
 import rs.etf.sab.operations.*;
 import rs.etf.sab.student.operations.*;
 
+import java.math.BigDecimal;
+
 public class TestUtils {
 
     public static final String sampleCityName = "Belgrade";
@@ -20,6 +22,11 @@ public class TestUtils {
     public static final String sampleUserPassword = "Tralala123@";
 
     public static final String sampleCourierDriversLicenseNumber = "123456789";
+
+    public static final int samplePackageDeltaX = -5;
+    public static final int samplePackageDeltaY = 7;
+    public static final int samplePackageType = 2; // package with non-standard dimensions
+    public static final BigDecimal samplePackageWeight = BigDecimal.valueOf(12.3);
 
     public static GeneralOperations generalOperations;
     public static CityOperations cityOperations;
@@ -118,5 +125,20 @@ public class TestUtils {
 
     public static void insertSampleCourierRequest() {
         insertSampleCourierRequest(sampleUserUserName, sampleCourierDriversLicenseNumber);
+    }
+
+    public static int insertSamplePackage(int deltaX, int deltaY, int type, BigDecimal weight) {
+        int idCity = insertSampleCity();
+        int idAddressFrom = insertSampleAddress(idCity);
+        int idAddressTo = insertSampleAddress(idCity, sampleAddressStreet, 52,
+                sampleAddressXCord + deltaX, sampleAddressYCord + deltaY);
+        insertSampleUser(idAddressFrom);
+        int rowId = packageOperations.insertPackage(idAddressFrom, idAddressTo, sampleUserUserName, type, weight);
+        Assert.assertNotEquals(-1, rowId);
+        return rowId;
+    }
+
+    public static int insertSamplePackage() {
+        return insertSamplePackage(samplePackageDeltaX, samplePackageDeltaY, samplePackageType, samplePackageWeight);
     }
 }

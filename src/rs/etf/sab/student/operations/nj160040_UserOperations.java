@@ -9,9 +9,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-// TODO: Change type attribute to allow multiple types at once...
-//       00 - buyer, 01 - courier (and buyer), 10 - admin (and buyer), 11 - admin, courier (and buyer)
-
 public class nj160040_UserOperations implements UserOperations {
 
     private static nj160040_UserOperations instance;
@@ -74,7 +71,7 @@ public class nj160040_UserOperations implements UserOperations {
             // TODO: Check if pwd needs hashing (irl it should but this is homework after all...)
             insStmt.setString(4, password);
             insStmt.setInt(5, idAddress);
-            insStmt.setInt(6, 0); // type
+            insStmt.setInt(6, CommonOperations.userTypeDefault);
             if (insStmt.executeUpdate() == 1) {
                 System.out.println("Successfully inserted user '" + firstName + ' ' + lastName + "' with user name '" +
                         userName + "'.");
@@ -103,14 +100,14 @@ public class nj160040_UserOperations implements UserOperations {
             System.out.println("User with user name '" + userName + "' does not exist!");
             return false;
         }
-        if (type == 2) {
+        if ((type & CommonOperations.userTypeAdminFlag) != 0) {
             System.out.println("User with user name '" + userName + "' is already an administrator.");
             return false;
         }
 
         // User was not admin, update the row...
         try (PreparedStatement stmt = conn.prepareStatement("update [User] set type = ? where userName = ?")) {
-            stmt.setInt(1, 2); // type = 2 (administrator)
+            stmt.setInt(1, type | CommonOperations.userTypeAdminFlag);
             stmt.setString(2, userName);
             if (stmt.executeUpdate() == 1) {
                 System.out.println("Successfully made user with user name '" + userName + "' an administrator.");
@@ -126,7 +123,6 @@ public class nj160040_UserOperations implements UserOperations {
 
     @Override
     public int getSentPackages(String... userNames) {
-        // TODO: Implement this method properly once packages are implemented...
         String userNameList = DB.getInstance().generateColumnValueList(userNames);
         if (userNameList == null) return 0;
 
@@ -140,8 +136,10 @@ public class nj160040_UserOperations implements UserOperations {
                 System.out.println("No users with user names: " + userNameList + " found!");
                 return -1;
             } else {
-                // TODO: Get the sum of sent packages counts for each userName...
-                return 0;
+                rs = stmt.executeQuery("select count(*) from Package where senderUserName in (" + userNameList + ')');
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
             }
         } catch (SQLException ex) {
             Logger.getLogger(nj160040_UserOperations.class.getName()).log(Level.SEVERE, null, ex);
