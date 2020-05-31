@@ -46,17 +46,18 @@ public class nj160040_PackageOperations implements PackageOperations {
 
         Connection conn = DB.getInstance().getConnection();
 
-        String insQuery = "insert into Package (idAddressFrom, idAddressTo, senderUserName, type, weight, createTime) " +
-                "values (?, ?, ?, ?, ?, ?)";
+        String insQuery = "insert into Package (idAddress, idAddressFrom, idAddressTo, senderUserName, type, weight, " +
+                "createTime) values (?, ?, ?, ?, ?, ?, ?)";
         String selQuery = "select top 1 idPackage from Package order by idPackage desc";
 
         try (PreparedStatement insStmt = conn.prepareStatement(insQuery)) {
             insStmt.setInt(1, idAddressFrom);
-            insStmt.setInt(2, idAddressTo);
-            insStmt.setString(3, userName);
-            insStmt.setInt(4, type);
-            insStmt.setBigDecimal(5, weight);
-            insStmt.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
+            insStmt.setInt(2, idAddressFrom);
+            insStmt.setInt(3, idAddressTo);
+            insStmt.setString(4, userName);
+            insStmt.setInt(5, type);
+            insStmt.setBigDecimal(6, weight);
+            insStmt.setTimestamp(7, new Timestamp(System.currentTimeMillis()));
             if (insStmt.executeUpdate() == 1) {
                 PreparedStatement selStmt = conn.prepareStatement(selQuery);
                 ResultSet rs = selStmt.executeQuery();
@@ -168,7 +169,7 @@ public class nj160040_PackageOperations implements PackageOperations {
 
         List<Integer> list = new ArrayList<>();
 
-        String selQuery = "select idPackage from Package where status = ? or status = ?";
+        String selQuery = "select idPackage from Package where status in (?, ?)";
 
         try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
             stmt.setInt(1, 1); // status = 1 (offer accepted)
@@ -186,12 +187,71 @@ public class nj160040_PackageOperations implements PackageOperations {
 
     @Override
     public List<Integer> getAllUndeliveredPackagesFromCity(int idCity) {
-        return null;
+        if (CommonOperations.cityNotExist(idCity)) {
+            System.out.println("City with primary key: " + idCity + " does not exist!");
+            // TODO: Check what should be returned in this case...
+            return null;
+        }
+
+        Connection conn = DB.getInstance().getConnection();
+
+        List<Integer> list = new ArrayList<>();
+
+        String selQuery = "select idPackage from " +
+                "((Package inner join Address on Package.idAddressFrom = Address.idAddress) " +
+                "inner join City on Address.idCity = City.idCity)" +
+                "where City.idCity = ? and Package.status in (?, ?)";
+
+        try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
+            stmt.setInt(1, idCity);
+            stmt.setInt(2, 1); // status = 1 (offer accepted)
+            stmt.setInt(3, 2); // status = 2 (package picked up)
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                list.add(rs.getInt(1));
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(nj160040_PackageOperations.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return list;
     }
 
     @Override
     public List<Integer> getAllPackagesCurrentlyAtCity(int idCity) {
-        return null;
+        if (CommonOperations.cityNotExist(idCity)) {
+            System.out.println("City with primary key: " + idCity + " does not exist!");
+            // TODO: Check what should be returned in this case...
+            return null;
+        }
+
+        Connection conn = DB.getInstance().getConnection();
+
+        List<Integer> list = new ArrayList<>();
+
+        int idStockroom = CommonOperations.getStockroomInCity(idCity);
+
+        String selQuery = "select idPackage from " +
+                "((Package inner join Address on Package.idAddress = Address.idAddress) " +
+                "inner join City on Address.idCity = City.idCity)" +
+                "where City.idCity = ? and Package.idAddress in (Package.idAddressFrom, Package.idAddressTo, ?) " +
+                "and Package.courierUserName is null and Package.status in (?, ?, ?)";
+
+        try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
+            stmt.setInt(1, idCity);
+            stmt.setInt(2, idStockroom);
+            stmt.setInt(3, 1); // status = 1 (offer accepted)
+            stmt.setInt(4, 2); // status = 2 (package picked up)
+            stmt.setInt(5, 3); // status = 3 (delivered)
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                list.add(rs.getInt(1));
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(nj160040_PackageOperations.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return list;
     }
 
     @Override
@@ -309,7 +369,24 @@ public class nj160040_PackageOperations implements PackageOperations {
 
     @Override
     public int getCurrentLocationOfPackage(int idPackage) {
-        return 0;
+        Connection conn = DB.getInstance().getConnection();
+
+        String selQuery = "select City.idCity from " +
+                "((Package inner join Address on Package.idAddress = Address.idAddress) " +
+                "inner join City on Address.idCity = City.idCity)" +
+                "where Package.idPackage = ? and Package.courierUserName is null";
+
+        try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
+            stmt.setInt(1, idPackage);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(nj160040_PackageOperations.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return -1;
     }
 
     @Override

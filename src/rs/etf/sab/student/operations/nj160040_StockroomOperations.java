@@ -1,6 +1,8 @@
 package rs.etf.sab.student.operations;
 
 import rs.etf.sab.operations.StockroomOperations;
+import rs.etf.sab.student.data.Package;
+import rs.etf.sab.student.data.Vehicle;
 import rs.etf.sab.student.utils.DB;
 
 import java.sql.Connection;
@@ -11,8 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-// TODO: Allow stockroom deletion only if it is empty!!! Check for emptiness...
 
 public class nj160040_StockroomOperations implements StockroomOperations {
 
@@ -45,7 +45,7 @@ public class nj160040_StockroomOperations implements StockroomOperations {
             int idCity = rs.getInt(1);
 
             // Check if stockroom exists in the same city...
-            int idStockroom = getStockroomInCity(idCity);
+            int idStockroom = CommonOperations.getStockroomInCity(idCity);
             if (idStockroom != -1) {
                 System.out.println("Stockroom with primary key: " + idStockroom +
                         " already exists in the city with primary key: " + idCity + '!');
@@ -76,6 +76,13 @@ public class nj160040_StockroomOperations implements StockroomOperations {
 
     @Override
     public boolean deleteStockroom(int idStockroom) {
+        List<Vehicle> vehicles = CommonOperations.getVehiclesInStockroom(idStockroom);
+        List<Package> packages = CommonOperations.getPackagesInStockroom(idStockroom);
+        if (!vehicles.isEmpty() || !packages.isEmpty()) {
+            System.out.println("Stockroom is not empty! Cannot be deleted!");
+            return false;
+        }
+
         Connection conn = DB.getInstance().getConnection();
 
         try (PreparedStatement stmt = conn.prepareStatement("delete from Stockroom where idStockroom = ?")) {
@@ -95,34 +102,9 @@ public class nj160040_StockroomOperations implements StockroomOperations {
         return false;
     }
 
-    public int getStockroomInCity(int idCity) {
-        Connection conn = DB.getInstance().getConnection();
-
-        // Check if city with specified primary key exists...
-        if (CommonOperations.cityNotExist(idCity)) {
-            System.out.println("City with primary key: " + idCity + " does not exist!");
-            return -1;
-        }
-
-        String stockroomSelQuery = "select idStockroom from " +
-                "((Stockroom inner join Address on Stockroom.idAddress = Address.idAddress) " +
-                "inner join City on Address.idCity = City.idCity)" +
-                "where City.idCity = ?";
-
-        try (PreparedStatement stmt = conn.prepareStatement(stockroomSelQuery)) {
-            stmt.setInt(1, idCity);
-            ResultSet rs = stmt.executeQuery();
-            return rs.next() ? rs.getInt(1) : -1;
-        } catch (SQLException ex) {
-            Logger.getLogger(nj160040_StockroomOperations.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        return -1;
-    }
-
     @Override
     public int deleteStockroomFromCity(int idCity) {
-        int idStockroom = getStockroomInCity(idCity);
+        int idStockroom = CommonOperations.getStockroomInCity(idCity);
         if (idStockroom > -1) {
             deleteStockroom(idStockroom);
         }

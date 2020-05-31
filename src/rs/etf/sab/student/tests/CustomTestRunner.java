@@ -11,6 +11,7 @@ public class CustomTestRunner {
 
     private static final int MAX_POINTS_NORMALIZED = 10;
     private static final Class<?>[] TEST_CLASSES = new Class<?>[] {
+            /*
             // PROVIDED TESTS
             rs.etf.sab.tests.CityOperationsTest.class,
             rs.etf.sab.tests.AddressOperationsTest.class,
@@ -26,6 +27,8 @@ public class CustomTestRunner {
             CourierOperationsTest.class,
             StockroomOperationsTest.class,
             PackageOperationsTest.class
+            */
+            rs.etf.sab.tests.PublicModuleTest.class
     };
 
     public static void runTests() {

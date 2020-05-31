@@ -81,7 +81,29 @@ public class nj160040_CourierOperations implements CourierOperations {
 
     @Override
     public BigDecimal getAverageCourierProfit(int numberOfDeliveries) {
-        // TODO: Implement this method...
+        Connection conn = DB.getInstance().getConnection();
+
+        String selQuery = "select avg(profit) from Courier where status != ?";
+
+        if (numberOfDeliveries > -1) {
+            selQuery += " and userName in (select courierUserName from Package where status = ? " +
+                    "group by courierUserName having count(*) = ?)";
+        }
+
+        try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
+            stmt.setInt(1, 2); // courier status = 2 (courier request)
+            if (numberOfDeliveries > -1) {
+                stmt.setInt(2, 3); // package status = 3 (delivered)
+                stmt.setInt(3, numberOfDeliveries);
+            }
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getBigDecimal(1);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(nj160040_CourierOperations.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
         return null;
     }
 
