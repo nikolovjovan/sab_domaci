@@ -337,8 +337,8 @@ public class CommonOperations {
         if (idAddress == -1) return list;
         Connection conn = DB.getInstance().getConnection();
         String selQuery = "select idPackage, type, idAddressFrom, idAddressTo, idAddress, status, acceptTime, " +
-                "weight, price, senderUserName, courierUserName from Package where idAddress = ? " +
-                "order by acceptTime asc";
+                "weight, price, senderUserName, courierUserName from Package where idAddress = ? and " +
+                "idPackage not in (select idPackage from IsPickingUp) order by acceptTime asc";
         try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
             stmt.setInt(1, idAddress);
             ResultSet rs = stmt.executeQuery();
@@ -369,8 +369,8 @@ public class CommonOperations {
         String selQuery = "select idPackage, type, idAddressFrom, idAddressTo, Package.idAddress, status, acceptTime, " +
                 "weight, price, senderUserName, courierUserName from " +
                 "((Package inner join Address on Package.idAddress = Address.idAddress) " +
-                "inner join City on Address.idCity = City.idCity) where City.idCity = ? and Package.status = ? " +
-                "order by acceptTime asc";
+                "inner join City on Address.idCity = City.idCity) where City.idCity = ? and Package.status = ? and " +
+                "idPackage not in (select idPackage from IsPickingUp) order by acceptTime asc";
         try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
             stmt.setInt(1, idCity);
             stmt.setInt(2, 1); // status = 1 (offer accepted)

@@ -20,7 +20,7 @@ public class nj160040_GeneralOperations implements GeneralOperations {
         return instance;
     }
 
-    private static final String[] tables = { "Stop", "IsDelivering", "IsDriving", "Drove", "Vehicle", "Package", "Courier", "User", "Stockroom", "Address", "City" };
+    private static final String[] tables = { "Stop", "IsDelivering", "IsPickingUp", "IsDriving", "Drove", "Vehicle", "Package", "Courier", "User", "Stockroom", "Address", "City" };
     private static final String[] tablesWithIdentityColumn = { "Package", "Stockroom", "Address", "City" };
 
     @Override

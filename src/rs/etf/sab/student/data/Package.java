@@ -16,6 +16,7 @@ public class Package {
     private BigDecimal price;
     private String senderUserName;
     private String courierUserName;
+    private boolean pickedUp;
 
     public int getIdPackage() {
         return idPackage;
@@ -103,5 +104,13 @@ public class Package {
 
     public void setCourierUserName(String courierUserName) {
         this.courierUserName = courierUserName;
+    }
+
+    public boolean isPickedUp() {
+        return pickedUp;
+    }
+
+    public void setPickedUp(boolean pickedUp) {
+        this.pickedUp = pickedUp;
     }
 }
