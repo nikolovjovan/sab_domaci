@@ -1,6 +1,5 @@
 package rs.etf.sab.student.operations;
 
-import rs.etf.sab.student.data.Address;
 import rs.etf.sab.student.data.Package;
 import rs.etf.sab.student.data.Vehicle;
 import rs.etf.sab.student.utils.DB;
@@ -150,9 +149,8 @@ public class CommonOperations {
             return -1;
         }
         try (PreparedStatement stmt = conn.prepareStatement("select idStockroom from " +
-                "((Stockroom inner join Address on Stockroom.idAddress = Address.idAddress) " +
-                "inner join City on Address.idCity = City.idCity)" +
-                "where City.idCity = ?")) {
+                "(Stockroom inner join Address on Stockroom.idAddress = Address.idAddress) " +
+                "where Address.idCity = ?")) {
             stmt.setInt(1, idCity);
             ResultSet rs = stmt.executeQuery();
             return rs.next() ? rs.getInt(1) : -1;
@@ -276,54 +274,16 @@ public class CommonOperations {
         return false;
     }
 
-    public static boolean isBeingDriven(String licensePlateNumber) {
-        Connection conn = DB.getInstance().getConnection();
-        String selQuery = "select userName from IsDriving where licensePlateNumber = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
-            stmt.setString(1, licensePlateNumber);
-            ResultSet rs = stmt.executeQuery();
-            return rs.next();
-        } catch (SQLException ex) {
-            Logger.getLogger(CommonOperations.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return true;
-    }
-
-    public static boolean notInStockroom(String licensePlateNumber) {
-        if (isBeingDriven(licensePlateNumber)) return true;
-        Connection conn = DB.getInstance().getConnection();
-        String selQuery = "select idStockroom from Vehicle where licensePlateNumber = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
-            stmt.setString(1, licensePlateNumber);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                rs.getInt(1);
-                return rs.wasNull();
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(CommonOperations.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return true;
-    }
-
     public static List<Vehicle> getVehiclesInStockroom(int idStockroom) {
         List<Vehicle> list = new ArrayList<>();
-        int idAddress = getStockroomAddress(idStockroom);
-        if (idAddress == -1) return list;
         Connection conn = DB.getInstance().getConnection();
-        String selQuery = "select licensePlateNumber, fuelType, fuelConsumption, capacity, idStockroom from Vehicle " +
+        String selQuery = "select " + Vehicle.getVehicleSelectAttributes() + " from Vehicle " +
                 "where idStockroom = ? and licensePlateNumber not in (select licensePlateNumber from IsDriving)";
         try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
-            stmt.setInt(1, idAddress);
+            stmt.setInt(1, idStockroom);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                Vehicle v = new Vehicle();
-                v.setLicensePlateNumber(rs.getString(1));
-                v.setFuelType(rs.getInt(2));
-                v.setFuelConsumption(rs.getBigDecimal(3));
-                v.setCapacity(rs.getBigDecimal(4));
-                v.setIdStockroom(rs.getInt(5));
-                list.add(v);
+                list.add(Vehicle.getVehicleFromResultSet(rs));
             }
         } catch (SQLException ex) {
             Logger.getLogger(CommonOperations.class.getName()).log(Level.SEVERE, null, ex);
@@ -336,82 +296,17 @@ public class CommonOperations {
         int idAddress = getStockroomAddress(idStockroom);
         if (idAddress == -1) return list;
         Connection conn = DB.getInstance().getConnection();
-        String selQuery = "select idPackage, type, idAddressFrom, idAddressTo, idAddress, status, acceptTime, " +
-                "weight, price, senderUserName, courierUserName from Package where idAddress = ? and " +
+        String selQuery = "select " + Package.getPackageSelectAttributes() + " from Package where idAddress = ? and " +
                 "idPackage not in (select idPackage from IsPickingUp) order by acceptTime asc";
         try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
             stmt.setInt(1, idAddress);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                Package p = new Package();
-                p.setIdPackage(rs.getInt(1));
-                p.setType(rs.getInt(2));
-                p.setIdAddressFrom(rs.getInt(3));
-                p.setIdAddressTo(rs.getInt(4));
-                p.setIdAddress(rs.getInt(5));
-                p.setStatus(rs.getInt(6));
-                p.setAcceptTime(rs.getTimestamp(7));
-                p.setWeight(rs.getBigDecimal(8));
-                p.setPrice(rs.getBigDecimal(9));
-                p.setSenderUserName(rs.getString(10));
-                p.setCourierUserName(rs.getString(11));
-                list.add(p);
+                list.add(Package.getPackageFromResultSet(rs));
             }
         } catch (SQLException ex) {
             Logger.getLogger(CommonOperations.class.getName()).log(Level.SEVERE, null, ex);
         }
         return list;
-    }
-
-    public static List<Package> getNonPickedUpPackagesInCity(int idCity) {
-        Connection conn = DB.getInstance().getConnection();
-        List<Package> list = new ArrayList<>();
-        String selQuery = "select idPackage, type, idAddressFrom, idAddressTo, Package.idAddress, status, acceptTime, " +
-                "weight, price, senderUserName, courierUserName from " +
-                "((Package inner join Address on Package.idAddress = Address.idAddress) " +
-                "inner join City on Address.idCity = City.idCity) where City.idCity = ? and Package.status = ? and " +
-                "idPackage not in (select idPackage from IsPickingUp) order by acceptTime asc";
-        try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
-            stmt.setInt(1, idCity);
-            stmt.setInt(2, 1); // status = 1 (offer accepted)
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                Package p = new Package();
-                p.setIdPackage(rs.getInt(1));
-                p.setType(rs.getInt(2));
-                p.setIdAddressFrom(rs.getInt(3));
-                p.setIdAddressTo(rs.getInt(4));
-                p.setIdAddress(rs.getInt(5));
-                p.setStatus(rs.getInt(6));
-                p.setAcceptTime(rs.getTimestamp(7));
-                p.setWeight(rs.getBigDecimal(8));
-                p.setPrice(rs.getBigDecimal(9));
-                p.setSenderUserName(rs.getString(10));
-                p.setCourierUserName(rs.getString(11));
-                list.add(p);
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(CommonOperations.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return list;
-    }
-
-    public static Address getAddressById(int idAddress) {
-        Connection conn = DB.getInstance().getConnection();
-        try (PreparedStatement stmt = conn.prepareStatement("select idCity, xCord, yCord from Address where idAddress = ?")) {
-            stmt.setInt(1, idAddress);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                Address a = new Address();
-                a.setIdAddress(idAddress);
-                a.setIdCity(rs.getInt(1));
-                a.setxCord(rs.getInt(2));
-                a.setyCord(rs.getInt(3));
-                return a;
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(CommonOperations.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return null;
     }
 }

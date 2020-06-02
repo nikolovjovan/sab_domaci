@@ -198,9 +198,8 @@ public class nj160040_PackageOperations implements PackageOperations {
         List<Integer> list = new ArrayList<>();
 
         String selQuery = "select idPackage from " +
-                "((Package inner join Address on Package.idAddressFrom = Address.idAddress) " +
-                "inner join City on Address.idCity = City.idCity)" +
-                "where City.idCity = ? and Package.status in (?, ?)";
+                "(Package inner join Address on Package.idAddressFrom = Address.idAddress) " +
+                "where Address.idCity = ? and Package.status in (?, ?)";
 
         try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
             stmt.setInt(1, idCity);
@@ -229,20 +228,19 @@ public class nj160040_PackageOperations implements PackageOperations {
 
         List<Integer> list = new ArrayList<>();
 
-        int idStockroom = CommonOperations.getStockroomInCity(idCity);
+        int idAddressStockroom = CommonOperations.getStockroomAddress(CommonOperations.getStockroomInCity(idCity));
 
         String selQuery = "select idPackage from " +
-                "((Package inner join Address on Package.idAddress = Address.idAddress) " +
-                "inner join City on Address.idCity = City.idCity)" +
-                "where City.idCity = ? and Package.idAddress in (Package.idAddressFrom, Package.idAddressTo, ?) " +
-                "and Package.courierUserName is null and Package.status in (?, ?, ?)";
+                "(Package inner join Address on Package.idAddress = Address.idAddress) " +
+                "where Address.idCity = ? and Package.idAddress in (Package.idAddressFrom, Package.idAddressTo, ?) " +
+                "and (Package.status in (?, ?) or (Package.status = ? and Package.courierUserName is null))";
 
         try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
             stmt.setInt(1, idCity);
-            stmt.setInt(2, idStockroom);
+            stmt.setInt(2, idAddressStockroom);
             stmt.setInt(3, 1); // status = 1 (offer accepted)
-            stmt.setInt(4, 2); // status = 2 (package picked up)
-            stmt.setInt(5, 3); // status = 3 (delivered)
+            stmt.setInt(4, 3); // status = 3 (delivered)
+            stmt.setInt(5, 2); // status = 2 (package picked up)
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 list.add(rs.getInt(1));
@@ -371,13 +369,13 @@ public class nj160040_PackageOperations implements PackageOperations {
     public int getCurrentLocationOfPackage(int idPackage) {
         Connection conn = DB.getInstance().getConnection();
 
-        String selQuery = "select City.idCity from " +
-                "((Package inner join Address on Package.idAddress = Address.idAddress) " +
-                "inner join City on Address.idCity = City.idCity)" +
-                "where Package.idPackage = ? and Package.courierUserName is null";
+        String selQuery = "select Address.idCity from " +
+                "(Package inner join Address on Package.idAddress = Address.idAddress) " +
+                "where Package.idPackage = ? and (Package.status = ? or Package.courierUserName is null)";
 
         try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
             stmt.setInt(1, idPackage);
+            stmt.setInt(2, 3); // status = 3 (package delivered)
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 return rs.getInt(1);

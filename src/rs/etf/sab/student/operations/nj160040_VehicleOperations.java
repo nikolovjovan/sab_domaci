@@ -21,6 +21,36 @@ public class nj160040_VehicleOperations implements VehicleOperations {
         return instance;
     }
 
+    private boolean isBeingDriven(String licensePlateNumber) {
+        Connection conn = DB.getInstance().getConnection();
+        String selQuery = "select userName from IsDriving where licensePlateNumber = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
+            stmt.setString(1, licensePlateNumber);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next();
+        } catch (SQLException ex) {
+            Logger.getLogger(CommonOperations.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return true;
+    }
+
+    private boolean notInStockroom(String licensePlateNumber) {
+        if (isBeingDriven(licensePlateNumber)) return true;
+        Connection conn = DB.getInstance().getConnection();
+        String selQuery = "select idStockroom from Vehicle where licensePlateNumber = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(selQuery)) {
+            stmt.setString(1, licensePlateNumber);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                rs.getInt(1);
+                return rs.wasNull();
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(CommonOperations.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return true;
+    }
+
     @Override
     public boolean insertVehicle(String licensePlateNumber, int fuelType, BigDecimal fuelConsumption, BigDecimal capacity) {
         if (fuelType < 0 || fuelType > 2) {
@@ -111,7 +141,7 @@ public class nj160040_VehicleOperations implements VehicleOperations {
             System.out.println("Invalid fuel type: " + fuelType + '!');
         }
 
-        if (CommonOperations.notInStockroom(licensePlateNumber)) {
+        if (notInStockroom(licensePlateNumber)) {
             System.out.println("Vehicle is not in stockroom! Cannot change fuel type!");
             return false;
         }
@@ -141,7 +171,7 @@ public class nj160040_VehicleOperations implements VehicleOperations {
             System.out.println("Invalid fuel consumption: " + fuelConsumption + '!');
         }
 
-        if (CommonOperations.notInStockroom(licensePlateNumber)) {
+        if (notInStockroom(licensePlateNumber)) {
             System.out.println("Vehicle is not in stockroom! Cannot change fuel consumption!");
             return false;
         }
@@ -171,7 +201,7 @@ public class nj160040_VehicleOperations implements VehicleOperations {
             System.out.println("Invalid capacity: " + capacity + '!');
         }
 
-        if (CommonOperations.notInStockroom(licensePlateNumber)) {
+        if (notInStockroom(licensePlateNumber)) {
             System.out.println("Vehicle is not in stockroom! Cannot change capacity!");
             return false;
         }
@@ -202,7 +232,7 @@ public class nj160040_VehicleOperations implements VehicleOperations {
             return false;
         }
 
-        if (CommonOperations.isBeingDriven(licensePlateNumber)) {
+        if (isBeingDriven(licensePlateNumber)) {
             System.out.println("Vehicle is being driven! Cannot park the vehicle!");
             return false;
         }

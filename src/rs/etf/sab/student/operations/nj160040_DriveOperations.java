@@ -23,98 +23,44 @@ public class nj160040_DriveOperations implements DriveOperation {
         return instance;
     }
 
-    private boolean takeVehicle(String courierUserName, Vehicle vehicle) {
-        Connection conn = DB.getInstance().getConnection();
-        try (PreparedStatement stmt = conn.prepareStatement("insert into IsDriving (userName, licensePlateNumber, " +
-                "currentStopNumber, distanceTraveled, remainingCapacity) values (?, ?, ?, ?, ?)")) {
-            stmt.setString(1, courierUserName);
-            stmt.setString(2, vehicle.getLicensePlateNumber());
-            stmt.setInt(3, 0); // currentStopNumber = 0 (at start)
-            stmt.setBigDecimal(4, BigDecimal.valueOf(0));
-            stmt.setBigDecimal(5, vehicle.getCapacity()); // initially vehicle is empty
-            if (stmt.executeUpdate() == 1) {
-                System.out.println("Courier with user name '" + courierUserName + "' has successfully taken the " +
-                        "vehicle with license plate number: " + vehicle.getLicensePlateNumber() + '.');
-                return true;
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(nj160040_DriveOperations.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        System.out.println("Courier with user name '" + courierUserName + "' has failed to take the vehicle with " +
-                "license plate number: " + vehicle.getLicensePlateNumber() + '!');
-        return false;
-    }
-
-    private void leaveVehicle(String courierUserName) {
-        Connection conn = DB.getInstance().getConnection();
-        try (PreparedStatement stmt = conn.prepareStatement("delete from IsDriving where userName = ?")) {
-            stmt.setString(1, courierUserName);
-            if (stmt.executeUpdate() == 1) {
-                System.out.println("Courier with user name '" + courierUserName + "' has successfully left the vehicle.");
-                return;
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(nj160040_DriveOperations.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        System.out.println("Courier with user name '" + courierUserName + "' has failed to leave the vehicle.");
-    }
-
-    private BigDecimal pickUpPackages(BigDecimal remainingCapacity, List<Package> packages) {
-        int count = 0, i = 0;
-        while (count < packages.size()) {
+    private BigDecimal pickupPackages(BigDecimal availableCapacity, List<Package> packages) {
+        int i = 0;
+        while (i < packages.size()) {
             Package p = packages.get(i);
-            if (remainingCapacity.compareTo(p.getWeight()) > 0) {
-                remainingCapacity = remainingCapacity.subtract(p.getWeight());
-                count++;
+            if (availableCapacity.compareTo(p.getWeight()) > 0) {
+                availableCapacity = availableCapacity.subtract(p.getWeight());
                 i++;
             } else {
                 packages.remove(i);
             }
         }
-        return remainingCapacity;
+        return availableCapacity;
     }
 
-    private double getDistance(Address a1, Address a2) {
-        double deltaX = a1.getxCord() - a2.getxCord();
-        double deltaY = a1.getyCord() - a2.getyCord();
-        return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-    }
-
-    private Address chooseNextStop(Address previousStop, Collection<Address> addresses) {
-        Address nextStop = null;
-        double distance, minDistance = Double.MAX_VALUE;
-        for (Address stop : addresses) {
-            distance = getDistance(stop, previousStop);
-            if (distance < minDistance) {
-                nextStop = stop;
-                minDistance = distance;
-            }
-        }
-        return nextStop;
-    }
-
-    private Address addAddressesToStops(Address previousStop, Collection<Address> addresses, List<Address> stops) {
-        while (!addresses.isEmpty()) {
-            Address nextStop = chooseNextStop(previousStop, addresses);
-            if (nextStop != null) {
-                stops.add(nextStop);
-                previousStop = nextStop;
-                addresses.remove(nextStop);
-            }
-        }
-        return previousStop;
-    }
-
-    private BigDecimal choosePackagesToPickUp(BigDecimal availableCapacity, List<Package> packagesToPickUp,
-                                              List<Address> stops, int idCity, int idStockroom, boolean isFirstCity) {
-        // TODO: Reorder code to only get packages in stockroom if needed (vehicle not full)
-
-        List<Package> packagesInCity = CommonOperations.getNonPickedUpPackagesInCity(idCity);
+    private BigDecimal choosePackagesForPickup(BigDecimal availableCapacity, List<Package> packagesToPickup,
+                                               List<Package> packagesInVehicle, List<Address> stops,
+                                               int idCity, int idStockroom) {
+        List<Package> packagesInCity = Package.getNonPickedUpPackagesInCity(idCity);
         List<Package> packagesInStockroom = CommonOperations.getPackagesInStockroom(idStockroom);
+
+        for (Package p : packagesToPickup) {
+            for (int i = 0; i < packagesInCity.size();) {
+                Package p2 = packagesInCity.get(i);
+                if (p2.getIdPackage() == p.getIdPackage()) {
+                    packagesInCity.remove(i);
+                } else i++;
+            }
+            for (int i = 0; i < packagesInStockroom.size();) {
+                Package p2 = packagesInStockroom.get(i);
+                if (p2.getIdPackage() == p.getIdPackage()) {
+                    packagesInStockroom.remove(i);
+                } else i++;
+            }
+        }
 
         if (packagesInCity.isEmpty()) {
             if (packagesInStockroom.isEmpty()) {
-                System.out.println("No packages for pick-up found in city with primary key: " + idCity + '!');
+                System.out.println("No packages for pickup found in city with primary key: " + idCity + '.');
                 return availableCapacity;
             } else {
                 System.out.println("No non-picked-up packages found in city with primary key: " + idCity + '.');
@@ -123,356 +69,430 @@ public class nj160040_DriveOperations implements DriveOperation {
             System.out.println("No packages found in stockroom with primary key: " + idStockroom + '.');
         }
 
-        BigDecimal remainingCapacity = pickUpPackages(pickUpPackages(availableCapacity, packagesInCity), packagesInStockroom);
+        BigDecimal remainingCapacity = pickupPackages(pickupPackages(availableCapacity, packagesInCity), packagesInStockroom);
 
-        if (packagesInCity.isEmpty() && packagesInStockroom.isEmpty()) {
-            return availableCapacity;
-        }
-
-        // Add packages to be picked-up
-        packagesToPickUp.addAll(packagesInCity);
-        packagesToPickUp.addAll(packagesInStockroom);
-
-        // Calculate all required addresses for pick-up (multiple packages can be on the same address...)
-        Collection<Address> addressesForPickUp = new HashSet<>();
+        Address prevStop = stops.get(stops.size() - 1);
         for (Package p : packagesInCity) {
-            Address address = CommonOperations.getAddressById(p.getIdAddress());
-            if (address == null) {
-                System.out.println("Failed to get address with primary key: " + p.getIdAddress() + '!');
-            } else {
-                addressesForPickUp.add(address);
+            if (p.getIdAddressFrom() != prevStop.getIdAddress()) {
+                Address nextStop = Address.getAddressById(p.getIdAddressFrom());
+                if (nextStop == null) {
+                    System.out.println("Failed to get address with primary key: " + p.getIdAddressFrom() + '!');
+                } else {
+                    stops.add(nextStop);
+                    prevStop = nextStop;
+                }
             }
+            p.setPickupStopNumber(stops.size() - 1);
         }
 
-        // Add stops for package pick-up
-        addAddressesToStops(stops.get(stops.size() - 1), addressesForPickUp, stops);
-
-        // Add stockroom address as a stop if there are packages to be picked-up there
         if (!packagesInStockroom.isEmpty()) {
-            if (isFirstCity) {
-                // Add starting stop (starting stockroom address) as next stop
-                stops.add(stops.get(0));
-            } else {
-                stops.add(CommonOperations.getAddressById(CommonOperations.getStockroomAddress(idStockroom)));
+            stops.add(Address.getAddressById(CommonOperations.getStockroomAddress(idStockroom)));
+            for (Package p : packagesInStockroom) {
+                p.setPickupStopNumber(stops.size() - 1);
             }
         }
+
+        packagesToPickup.addAll(packagesInCity);
+        packagesToPickup.addAll(packagesInStockroom);
+
+        packagesInVehicle.addAll(packagesInCity);
+        packagesInVehicle.addAll(packagesInStockroom);
 
         return remainingCapacity;
     }
 
-    private void abort(String courierUserName) {
-        // Revert courier status
-        CommonOperations.setCourierStatus(courierUserName, 0);
-        // Leave vehicle
-        leaveVehicle(courierUserName);
+    private Address chooseNextStop(Address prevStop, List<Package> packagesForDelivery) {
+        Address nextStop = null;
+        BigDecimal distance, minDistance = BigDecimal.valueOf(Double.MAX_VALUE);
+        for (Package p : packagesForDelivery) {
+            Address stop = Address.getAddressById(p.getIdAddressTo());
+            if (stop == null) {
+                System.out.println("Failed to get destination address by id: " + p.getIdAddressTo() + '!');
+                return null;
+            }
+            distance = Address.getDistance(prevStop, stop);
+            if (distance.compareTo(minDistance) < 0) {
+                nextStop = stop;
+                minDistance = distance;
+            }
+        }
+        return nextStop;
+    }
 
+    private void abort(int stage, String courierUserName, String licensePlateNumber) {
+        if (stage < 1) return;
+        // Reset courier status to not driving.
+        CommonOperations.setCourierStatus(courierUserName, 0);
+        if (stage < 2) return;
+        // Leave vehicle without remembering it.
+        Vehicle.leave(courierUserName, licensePlateNumber, false);
+        if (stage < 3) return;
+        Package.clearPackagesForDelivery(courierUserName);
+        if (stage < 4) return;
+        Package.clearPackagesForPickup(courierUserName);
+        if (stage < 5) return;
+        Address.clearStops(courierUserName);
     }
 
     @Override
     public boolean planingDrive(String courierUserName) {
-        // Check if courier is already driving
-        if (CommonOperations.getCourierStatus(courierUserName) == 1) {
+        // PHASE 1: Delivery selection and drive initialization.
+
+        // STEP 1: Check if courier is already driving.
+        int statusCourier = CommonOperations.getCourierStatus(courierUserName);
+        if (statusCourier == -1) return false; // user invalid, user not courier, etc.
+        if (statusCourier == 1) {
             System.out.println("Courier with user name '" + courierUserName + "' is already driving!");
             return false;
         }
 
-        // Get courier city (starting city)
+        // STEP 2: Get courier address and city (starting city).
         int idAddressCourier = CommonOperations.getUserAddress(courierUserName);
         if (idAddressCourier == -1) return false;
-        int idCity = CommonOperations.getAddressCity(idAddressCourier);
-        if (idCity == -1) return false;
+        int idCityCourier = CommonOperations.getAddressCity(idAddressCourier);
+        if (idCityCourier == -1) return false;
 
-        // Get stockroom in courier's city
-        int idStockroom = CommonOperations.getStockroomInCity(idCity);
-        if (idStockroom == -1) return false;
+        // STEP 3: Get stockroom in courier's city.
+        int idStockroomCourier = CommonOperations.getStockroomInCity(idCityCourier);
+        if (idStockroomCourier == -1) return false;
 
-        // Get available vehicles in stockroom
-        List<Vehicle> vehicles = CommonOperations.getVehiclesInStockroom(idStockroom);
+        // STEP 4: Get available vehicles in stockroom.
+        List<Vehicle> vehicles = CommonOperations.getVehiclesInStockroom(idStockroomCourier);
         if (vehicles.isEmpty()) {
-            System.out.println("There is no vehicle available for courier with user name '" + courierUserName + "'!");
+            System.out.println("There are no available vehicles in stockroom!");
             return false;
         }
 
-        // TODO: Check which vehicle should the courier pick from the stockroom (largest capacity, smallest fuel
-        //       consumption and therefore price)
-        // Get first available vehicle in stockroom
+        // STEP 5: Choose a vehicle from available vehicles.
+        // TODO: Check how vehicle should be chosen (smallest fuel consumption, largest capacity...)
         Vehicle vehicle = vehicles.get(0);
 
-        List<Package> packagesToPickUp = new ArrayList<>();
+        // STEP 6: Choose packages for pickup in starting city and add stops.
         List<Address> stops = new ArrayList<>();
+        List<Package> packagesToPickup = new ArrayList<>();
+        List<Package> packagesInVehicle = new ArrayList<>();
 
-        // Starting address (zeroth stop) is the stockroom in the starting city
-        stops.add(CommonOperations.getAddressById(CommonOperations.getStockroomAddress(idStockroom)));
+        // Add starting point - stockroom in starting city.
+        stops.add(Address.getAddressById(CommonOperations.getStockroomAddress(idStockroomCourier)));
 
-        // Choose packages to pick-up in the starting city
-        BigDecimal availableCapacity = choosePackagesToPickUp(vehicle.getCapacity(), packagesToPickUp, stops, idCity,
-                idStockroom, true);
+        // Choose packages for pickup and update stops...
+        BigDecimal availableCapacity = choosePackagesForPickup(vehicle.getCapacity(), packagesToPickup,
+                packagesInVehicle, stops, idCityCourier, idStockroomCourier);
 
         if (availableCapacity == null) {
-            System.out.println("Failed to choose packages to pick up in the starting city!");
+            System.out.println("Failed to choose packages to pickup in the starting city!");
             return false;
-        } else if (availableCapacity.compareTo(vehicle.getCapacity()) == 0) {
-            System.out.println("No packages can be delivered at this time because of capacity constraints!");
+        } else if (packagesToPickup.isEmpty()) {
+            System.out.println("No packages can be delivered at this time!");
             return false;
         }
 
-        // All packages that are to be picked-up in the starting city are to be delivered
-        int numberOfPackagesToDeliver = packagesToPickUp.size();
-/*
-        // Calculate all required addresses for delivery (multiple packages can be on the same address...)
-        Collection<Address> addressesForDelivery = new HashSet<>();
-        for (Package p : packagesToPickUp) {
-            p.setPickedUp(true);
-            Address address = CommonOperations.getAddressById(p.getIdAddressTo());
-            if (address == null) {
-                System.out.println("Failed to get address with primary key: " + p.getIdAddress() + '!');
-            } else {
-                addressesForDelivery.add(address);
-            }
-        }
+        // PHASE 2: Delivery planning and package pickup in visited cities.
 
-        while (!addressesForDelivery.isEmpty()) {
-            // Calculate the next city to be visited
-            Address previousStop = stops.get(stops.size() - 1);
-            Address nextStop = chooseNextStop(previousStop, addressesForDelivery);
-            if (nextStop == null) {
-                System.out.println("Failed to select next stop for delivery!");
-                return false;
-            } else {
-                idCity = nextStop.getIdCity();
+        // STEP 1: All packages that are picked up in the starting city are to be delivered.
+        int numberOfPackagesForDelivery = packagesToPickup.size();
+
+        // STEP 2: Simulate the drive in order to add all required stops and packages for pickup.
+        List<Package> packagesForDelivery = new ArrayList<>(packagesToPickup);
+
+        // All stops in starting city "were visited" so the first stop in next city is chosen here.
+        Address prevStop, nextStop = chooseNextStop(stops.get(stops.size() - 1), packagesForDelivery);
+        if (nextStop == null) {
+            System.out.println("Failed to choose next stop for delivery!");
+            return false;
+        }
+        while (!packagesForDelivery.isEmpty()) {
+            // Deliver all packages while in the same city...
+            do {
                 stops.add(nextStop);
-                previousStop = nextStop;
-                addressesForDelivery.remove(nextStop);
-            }
-            Collection<Address> addressesForDeliveryInCity = new ArrayList<>();
-            for (Address address : addressesForDelivery) {
-                if (address.getIdCity() == idCity) {
-                    addressesForDeliveryInCity.add(address);
+                for (int i = 0; i < packagesForDelivery.size(); ) {
+                    Package p = packagesForDelivery.get(i);
+                    if (p.getIdAddressTo() == nextStop.getIdAddress()) {
+                        availableCapacity = availableCapacity.add(p.getWeight());
+                        p.setDeliveryStopNumber(stops.size() - 1);
+                        packagesForDelivery.remove(p);
+                        packagesInVehicle.remove(p);
+                    } else i++;
                 }
-            }
-            addressesForDelivery.removeAll(addressesForDeliveryInCity);
-            if (!addressesForDeliveryInCity.isEmpty()) {
-                previousStop = addAddressesToStops(previousStop, addressesForDeliveryInCity, stops);
-            }
-
-            for (int i = 0; i < numberOfPackagesToDeliver; i++) {
-                Package p = packagesToPickUp.get(i);
-                if (p.getIdAddressTo() == nextStop.getIdAddress()) {
-                    // drop package
+                prevStop = nextStop;
+                if (packagesForDelivery.isEmpty()) break;
+                nextStop = chooseNextStop(prevStop, packagesForDelivery);
+                if (nextStop == null) {
+                    System.out.println("Failed to choose next stop for delivery!");
+                    return false;
                 }
-            }
-            // TODO: Subtract delivered package weight from availableCapacity...
-            // TODO: Call choosePackagesToPickUp...
+            } while (nextStop.getIdCity() == prevStop.getIdCity());
+            // Next stop is not in the same city so now pickup all packages from this city.
+            int idCity = prevStop.getIdCity();
+            int idStockroom = CommonOperations.getStockroomInCity(idCity);
+            availableCapacity = choosePackagesForPickup(availableCapacity, packagesToPickup, packagesInVehicle, stops,
+                    idCity, idStockroom);
         }
-*/
-        // Update courier status
+
+        // PHASE 3: Return planning and package storing in stockroom.
+        stops.add(stops.get(0)); // add starting address as last address (stockroom in starting city)
+
+        // PHASE 4: Update database.
+
+        // STEP 1: Set courier status to 1 (driving).
         if (!CommonOperations.setCourierStatus(courierUserName, 1)) {
             System.out.println("Failed to change courier status to driving! Aborting...");
-            abort(courierUserName);
+            abort(0, courierUserName, vehicle.getLicensePlateNumber());
             return false;
         }
 
-        // Take the vehicle
-        if (!takeVehicle(courierUserName, vehicle)) {
+        // STEP 2: Take the vehicle
+        if (!Vehicle.take(courierUserName, vehicle.getLicensePlateNumber(), vehicle.getCapacity())) {
             System.out.println("Failed to take the vehicle! Aborting...");
-            abort(courierUserName);
+            abort(1, courierUserName, vehicle.getLicensePlateNumber());
             return false;
         }
 
-        Connection conn = DB.getInstance().getConnection();
-
-        // Insert packages to be picked up into table 'IsPickingUp'
-        try (PreparedStatement stmt = conn.prepareStatement("insert into IsPickingUp (userName, idPackage) values (?, ?)")) {
-            stmt.setString(1, courierUserName);
-            for (Package p : packagesToPickUp) {
-                stmt.setInt(2, p.getIdPackage());
-                if (stmt.executeUpdate() != 1) {
-                    System.out.println("Failed to add package with primary key: " + p.getIdPackage() + " to pick-up list!");
-                    abort(courierUserName);
-                    return false;
-                }
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(nj160040_DriveOperations.class.getName()).log(Level.SEVERE, null, ex);
-            abort(courierUserName);
+        // STEP 3: Set packages to be delivered.
+        if (!Package.setPackagesForDelivery(courierUserName, packagesToPickup, numberOfPackagesForDelivery)) {
+            System.out.println("Failed to set packages to be delivered. Aborting...");
+            abort(2, courierUserName, vehicle.getLicensePlateNumber());
             return false;
         }
 
-        // Insert packages to be delivered into table 'IsDelivering'
-        try (PreparedStatement stmt = conn.prepareStatement("insert into IsDelivering (userName, idPackage) values (?, ?)")) {
-            stmt.setString(1, courierUserName);
-            for (int i = 0; i < numberOfPackagesToDeliver; i++) {
-                Package p = packagesToPickUp.get(i);
-                stmt.setInt(2, p.getIdPackage());
-                if (stmt.executeUpdate() != 1) {
-                    System.out.println("Failed to add package with primary key: " + p.getIdPackage() + " to delivery list!");
-                    abort(courierUserName);
-                    return false;
-                }
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(nj160040_DriveOperations.class.getName()).log(Level.SEVERE, null, ex);
-            abort(courierUserName);
+        // STEP 4: Set packages to be picked-up.
+        if (!Package.setPackagesForPickup(courierUserName, packagesToPickup)) {
+            System.out.println("Failed to set packages to be picked-up. Aborting...");
+            abort(3, courierUserName, vehicle.getLicensePlateNumber());
             return false;
         }
 
-        // Insert stops (addresses) into table 'Stop'
-        try (PreparedStatement stmt = conn.prepareStatement("insert into Stop (userName, idAddress, stopNumber) values (?, ?, ?)")) {
-            stmt.setString(1, courierUserName);
-            for (int i = 0; i < stops.size(); i++) {
-                stmt.setInt(2, stops.get(i).getIdAddress());
-                stmt.setInt(3, i); // stop number
-                if (stmt.executeUpdate() != 1) {
-                    System.out.println("Failed to add address with primary key: " + stops.get(i).getIdAddress() + " to stops list!");
-                    abort(courierUserName);
-                    return false;
-                }
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(nj160040_DriveOperations.class.getName()).log(Level.SEVERE, null, ex);
-            abort(courierUserName);
+        // STEP 5: Set stops.
+        if (!Address.setStops(courierUserName, stops)) {
+            System.out.println("Failed to set stops. Aborting...");
+            abort(4, courierUserName, vehicle.getLicensePlateNumber());
             return false;
         }
 
+        // All is well!
         return true;
     }
 
+    // -3 for everything invalid...
     @Override
     public int nextStop(String courierUserName) {
-        // Check if courier is already driving
-        if (CommonOperations.getCourierStatus(courierUserName) != 1) {
-            System.out.println("Courier with user name '" + courierUserName + "' is not driving!");
-            // TODO: Check what should be returned in this case...
-            return -3;
-        }
-
         Connection conn = DB.getInstance().getConnection();
 
-        String isDrivingSelQuery = "select licensePlateNumber, currentStopNumber, distanceTraveled, remainingCapacity from IsDriving where userName = ?";
+        try {
+            // PHASE 1: Data retrieval.
 
-        String licensePlateNumber;
-        int currentStopNumber;
-        BigDecimal distanceTraveled, remainingCapacity;
+            // STEP 1: Check if courier is driving.
+            int statusCourier = CommonOperations.getCourierStatus(courierUserName);
+            if (statusCourier == -1) return -3; // user invalid, user not courier, etc.
+            if (statusCourier != 1) {
+                System.out.println("Courier with user name '" + courierUserName + "' is not driving!");
+                return -3;
+            }
 
-        try (PreparedStatement stmt = conn.prepareStatement(isDrivingSelQuery)) {
+            // STEP 2: Get current drive state.
+            String licensePlateNumber;
+            int currentStopNumber;
+            BigDecimal distanceTraveled, remainingCapacity;
+
+            String isDrivingSelQuery = "select licensePlateNumber, currentStopNumber, distanceTraveled, " +
+                    "remainingCapacity from IsDriving where userName = ?";
+
+            PreparedStatement stmt = conn.prepareStatement(isDrivingSelQuery);
             stmt.setString(1, courierUserName);
             ResultSet rs = stmt.executeQuery();
             if (!rs.next()) {
-                System.out.println("Row for courier with user name '" + courierUserName + "' in 'IsDriving' table does not exist!");
-                // TODO: Check what should be returned in this case...
-                return -4;
-            } else {
-                licensePlateNumber = rs.getString(1);
-                currentStopNumber = rs.getInt(2);
-                distanceTraveled = rs.getBigDecimal(3);
-                remainingCapacity = rs.getBigDecimal(4);
+                System.out.println("Failed to get current drive state!");
+                return -3;
             }
-        } catch (SQLException ex) {
-            Logger.getLogger(nj160040_DriveOperations.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("Failed to get current stop number and remaining capacity for courier with user name '" + courierUserName + '!');
-            // TODO: Check what should be returned in this case...
-            return -5;
-        }
 
-        System.out.println(courierUserName + ':' + licensePlateNumber + ':' + currentStopNumber + ':' + distanceTraveled + ':' + remainingCapacity);
+            licensePlateNumber = rs.getString(1);
+            currentStopNumber = rs.getInt(2);
+            distanceTraveled = rs.getBigDecimal(3);
+            remainingCapacity = rs.getBigDecimal(4);
 
-        String stopSelQuery = "select idAddress from Stop where userName = ? and stopNumber in (?, ?)";
+            // TODO: Remove debug print:
+            System.out.println(courierUserName + ':' + licensePlateNumber + ':' + currentStopNumber + ':' +
+                    distanceTraveled + ':' + remainingCapacity);
 
-        Address prevStop, nextStop;
+            // STEP 3: Get current stop and next stop.
+            int nextStopNumber = currentStopNumber + 1;
 
-        try (PreparedStatement stmt = conn.prepareStatement(stopSelQuery)) {
+            String stopSelQuery = "select idAddress from Stop where userName = ? and stopNumber in (?, ?, ?) order by stopNumber asc";
+
+            stmt = conn.prepareStatement(stopSelQuery);
             stmt.setString(1, courierUserName);
             stmt.setInt(2, currentStopNumber);
-            stmt.setInt(3, currentStopNumber + 1); // next stop number
-            ResultSet rs = stmt.executeQuery();
+            stmt.setInt(3, nextStopNumber);
+            stmt.setInt(4, nextStopNumber + 1); // stop after next stop, used to check if last stop...
+            rs = stmt.executeQuery();
+
+            Address prevStop, nextStop;
+
             if (!rs.next()) {
-                System.out.println("Row for courier with user name '" + courierUserName + "' in 'Stop' table does not exist!");
-                // TODO: Check what should be returned in this case...
-                return -6;
-            } else {
-                prevStop = CommonOperations.getAddressById(rs.getInt(1));
-                if (rs.next()) { // there is a next stop...
-                    nextStop = CommonOperations.getAddressById(rs.getInt(1));
-                } else { // last stop...
-                    // TODO: Do what's needed for last stop
-
-
-
-                    return -1; // last stop marker
-                }
+                System.out.println("Error! Current stop info does not exist!");
+                return -3;
             }
-        } catch (SQLException ex) {
-            Logger.getLogger(nj160040_DriveOperations.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("Failed to get current stop number and remaining capacity for courier with user name '" + courierUserName + '!');
-            // TODO: Check what should be returned in this case...
-            return -7;
-        }
-
-        distanceTraveled = distanceTraveled.add(BigDecimal.valueOf(getDistance(prevStop, nextStop)));
-
-        // TODO: First delivery then pickup
-
-        String pickUpUpdQuery = "update Package set status = ?, courierUserName = ? where idPackage in (" +
-                "select Package.idPackage from (Package inner join IsPickingUp on " +
-                "Package.idPackage = IsPickingUp.idPackage) where IsPickingUp.userName = ? and Package.idAddress = ?)";
-
-        int retValue = 0;
-
-        try (PreparedStatement stmt = conn.prepareStatement(pickUpUpdQuery)) {
-            stmt.setInt(1, 2); // status = 2 (package picked up)
-            stmt.setString(2, courierUserName);
-            stmt.setString(3, courierUserName);
-            stmt.setInt(4, nextStop.getIdAddress());
-            if (stmt.executeUpdate() > 0) {
-                retValue = -2; // package pickup flag
+            prevStop = Address.getAddressById(rs.getInt(1));
+            if (prevStop == null) {
+                System.out.println("Failed to get current stop address!");
+                return -3;
             }
-        } catch (SQLException ex) {
-            Logger.getLogger(nj160040_DriveOperations.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("Failed to get packages for pickup for courier with user name '" + courierUserName + '!');
-            // TODO: Check what should be returned in this case...
-            return -8;
-        }
 
-        if (retValue == -2) {
-            String weightSelQuery = "select weight from (Package inner join IsPickingUp on " +
-                    "Package.idPackage = IsPickingUp.idPackage) where IsPickingUp.userName = ? and Package.idAddress = ?";
+            if (!rs.next()) {
+                System.out.println("Error! Next stop info does not exist!");
+                return -3;
+            }
+            nextStop = Address.getAddressById(rs.getInt(1));
+            if (nextStop == null) {
+                System.out.println("Failed to get next stop address!");
+                return -3;
+            }
 
-            try (PreparedStatement stmt = conn.prepareStatement(weightSelQuery)) {
+            // STEP 4: Update distance traveled.
+            distanceTraveled = distanceTraveled.add(Address.getDistance(prevStop, nextStop));
+
+            // STEP 5: Check if last stop...
+            if (!rs.next()) {
+                // TODO: Last stop... empty vehicle, leave vehicle, change courier status, update profit,
+                //       clear IsPickingUp, IsDelivering, Stop...
+
+                // Leave vehicle and remember that it was driven by the specified courier.
+                Vehicle.leave(courierUserName, licensePlateNumber, true);
+
+                String dropInStockroomQuery = "update Package set courierUserName = null, idAddress = ? " +
+                        "where courierUserName = ? and status = ?";
+
+                stmt = conn.prepareStatement(dropInStockroomQuery);
+                stmt.setInt(1, nextStop.getIdAddress());
+                stmt.setString(2, courierUserName);
+                stmt.setInt(3, 2); // status = 2 (package picked up)
+
+                // Drop all packages at the last stop's address (starting stockroom address).
+                stmt.executeUpdate();
+
+                // Set courier status to not driving.
+                CommonOperations.setCourierStatus(courierUserName, 0);
+
+                // Get the list of delivered packages before clearing it...
+                List<Package> packagesForDelivery = Package.getPackagesForDelivery(courierUserName);
+
+                // Clear packages for pickup and delivery for the specified courier.
+                Package.clearPackagesForPickup(courierUserName);
+                Package.clearPackagesForDelivery(courierUserName);
+
+                // Clear drive stops for this courier.
+                Address.clearStops(courierUserName);
+
+                // Get courier profit
+                stmt = conn.prepareStatement("select profit from Courier where userName = ?");
                 stmt.setString(1, courierUserName);
-                stmt.setInt(2, nextStop.getIdAddress());
-                ResultSet rs = stmt.executeQuery();
-                while (rs.next()) {
-                    remainingCapacity = remainingCapacity.subtract(rs.getBigDecimal(1));
+                rs = stmt.executeQuery();
+                if (!rs.next()) {
+                    System.out.println("Failed to get courier profit!");
+                    return -3;
                 }
-            } catch (SQLException ex) {
-                Logger.getLogger(nj160040_DriveOperations.class.getName()).log(Level.SEVERE, null, ex);
-                System.out.println("Failed to get weight of packages for pickup for courier with user name '" + courierUserName + '!');
-                // TODO: Check what should be returned in this case...
-                return -9;
+
+                BigDecimal profit = rs.getBigDecimal(1);
+
+                Vehicle vehicle = Vehicle.getVehicleByLicensePlateNumber(licensePlateNumber);
+                if (vehicle == null) {
+                    System.out.println("Failed to get vehicle by license plate number: " + licensePlateNumber + '!');
+                    return -3;
+                }
+
+                // Calculate courier profit...
+                for (Package p : packagesForDelivery) {
+                    profit = profit.add(p.getPrice());
+                }
+
+                BigDecimal fuelCost;
+                if (vehicle.getFuelType() == 0) { // natural gas
+                    fuelCost = BigDecimal.valueOf(15);
+                } else if (vehicle.getFuelType() == 1) { // diesel
+                    fuelCost = BigDecimal.valueOf(32);
+                } else { // petrol
+                    fuelCost = BigDecimal.valueOf(36);
+                }
+
+                profit = profit.subtract(distanceTraveled.multiply(vehicle.getFuelConsumption()).multiply(fuelCost));
+
+                // Update courier profit
+                stmt = conn.prepareStatement("update Courier set profit = ? where userName = ?");
+                stmt.setBigDecimal(1, profit);
+                stmt.setString(2, courierUserName);
+                if (stmt.executeUpdate() != 1) {
+                    System.out.println("Failed to update courier profit!");
+                }
+
+                return -1; // last stop marker
             }
-        }
 
-        // Update IsDriving
-        String isDrivingUpdQuery = "update IsDriving set currentStopNumber = ?, distanceTraveled = ?, " +
-                "remainingCapacity = ? where userName = ?";
+            // STEP 6: Check if there are packages for pickup or delivery at next stop.
+            List<Package> packagesForPickup = Package.getPackagesForPickupAtStop(courierUserName, currentStopNumber + 1);
+            List<Package> packagesForDelivery = Package.getPackagesForDeliveryAtStop(courierUserName, currentStopNumber + 1);
 
-        try (PreparedStatement stmt = conn.prepareStatement(isDrivingUpdQuery)) {
-            stmt.setInt(1, currentStopNumber + 1); // update stop number
-            stmt.setBigDecimal(2, distanceTraveled); // update distance traveled
-            stmt.setBigDecimal(3, remainingCapacity); // update remaining capacity
+            if (!packagesForPickup.isEmpty() && !packagesForDelivery.isEmpty()) {
+                System.out.println("Invalid action for stop with number: " + nextStopNumber + '!');
+                return -3;
+            }
+
+            // STEP 7: Depending on whether packages should be picked up or delivered update packages accordingly...
+
+            int retVal;
+
+            if (!packagesForPickup.isEmpty()) {
+                String pickupUpdQuery = "update Package set status = ?, courierUserName = ? where idPackage = ?";
+
+                stmt = conn.prepareStatement(pickupUpdQuery);
+                stmt.setInt(1, 2); // status = 2 (package picked up)
+                stmt.setString(2, courierUserName);
+
+                for (Package p : packagesForPickup) {
+                    remainingCapacity = remainingCapacity.subtract(p.getWeight());
+                    stmt.setInt(3, p.getIdPackage());
+                    if (stmt.executeUpdate() != 1) {
+                        System.out.println("Failed to pickup package with package id: " + p.getIdPackage() + '!');
+                    }
+                }
+
+                retVal = -2;
+            } else {
+                String deliveryUpdQuery = "update Package set status = ?, idAddress = ? where idPackage = ?";
+
+                stmt = conn.prepareStatement(deliveryUpdQuery);
+                stmt.setInt(1, 3); // status = 3 (package delivered)
+                stmt.setInt(2, nextStop.getIdAddress());
+
+                for (Package p : packagesForDelivery) {
+                    remainingCapacity = remainingCapacity.add(p.getWeight());
+                    stmt.setInt(3, p.getIdPackage());
+                    if (stmt.executeUpdate() != 1) {
+                        System.out.println("Failed to deliver package with package id: " + p.getIdPackage() + '!');
+                    }
+                }
+
+                // TODO: Check which package id should be returned if there are multiple packages for delivery at this address.
+                retVal = packagesForDelivery.get(0).getIdPackage();
+            }
+
+            // STEP 8: Update current stop number, distance traveled and remaining capacity...
+            String isDrivingUpdQuery = "update IsDriving set currentStopNumber = ?, distanceTraveled = ?, " +
+                    "remainingCapacity = ? where userName = ?";
+
+            stmt = conn.prepareStatement(isDrivingUpdQuery);
+            stmt.setInt(1, nextStopNumber);
+            stmt.setBigDecimal(2, distanceTraveled);
+            stmt.setBigDecimal(3, remainingCapacity);
             stmt.setString(4, courierUserName);
-            if (stmt.executeUpdate() != 1) {
-                System.out.println("Failed to update IsDriving table!");
-                // TODO: Check what should be returned in this case...
-                return -10;
-            }
+
+            if (stmt.executeUpdate() == 1) return retVal;
         } catch (SQLException ex) {
             Logger.getLogger(nj160040_DriveOperations.class.getName()).log(Level.SEVERE, null, ex);
-            // TODO: Check what should be returned in this case...
-            return -11;
+            System.out.println("SQL exception occurred!");
         }
 
-        return retValue;
+        // Something failed, should have returned before this point...
+        return -3;
     }
 
     @Override
@@ -488,7 +508,7 @@ public class nj160040_DriveOperations implements DriveOperation {
                 list.add(rs.getInt(1));
             }
         } catch (SQLException ex) {
-            Logger.getLogger(nj160040_PackageOperations.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(nj160040_DriveOperations.class.getName()).log(Level.SEVERE, null, ex);
         }
         return list;
     }
