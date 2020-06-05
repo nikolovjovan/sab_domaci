@@ -1,9 +1,9 @@
 package rs.etf.sab.student;
 
 import rs.etf.sab.student.operations.*;
-import rs.etf.sab.student.tests.CustomTestRunner;
+//import rs.etf.sab.student.tests.CustomTestRunner;
 import rs.etf.sab.tests.TestHandler;
-//import rs.etf.sab.tests.TestRunner;
+import rs.etf.sab.tests.TestRunner;
 
 public class StudentMain {
 
@@ -20,9 +20,8 @@ public class StudentMain {
                 nj160040_UserOperations.getInstance(),
                 nj160040_VehicleOperations.getInstance());
 
-        // TODO: Uncomment original test runner call and use it instead of the custom one.
-//        TestRunner.runTests();
+        TestRunner.runTests();
 
-        CustomTestRunner.runTests();
+//        CustomTestRunner.runTests();
     }
 }

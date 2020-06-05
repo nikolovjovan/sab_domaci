@@ -310,10 +310,6 @@ public class nj160040_DriveOperations implements DriveOperation {
             distanceTraveled = rs.getBigDecimal(3);
             remainingCapacity = rs.getBigDecimal(4);
 
-            // TODO: Remove debug print:
-            System.out.println(courierUserName + ':' + licensePlateNumber + ':' + currentStopNumber + ':' +
-                    distanceTraveled + ':' + remainingCapacity);
-
             // STEP 3: Get current stop and next stop.
             int nextStopNumber = currentStopNumber + 1;
 
@@ -353,9 +349,6 @@ public class nj160040_DriveOperations implements DriveOperation {
 
             // STEP 5: Check if last stop...
             if (!rs.next()) {
-                // TODO: Last stop... empty vehicle, leave vehicle, change courier status, update profit,
-                //       clear IsPickingUp, IsDelivering, Stop...
-
                 // Leave vehicle and remember that it was driven by the specified courier.
                 Vehicle.leave(courierUserName, licensePlateNumber, true);
 
